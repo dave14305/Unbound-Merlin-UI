@@ -568,7 +568,7 @@ unbound_conf() {
 
   if  [ -n "$UB_LIST_INSECURE" ] ; then
     {
-      for domain in $UB_LIST_INSECURE ; do
+	  for domain in $(echo $UB_LIST_INSECURE | /opt/bin/base64 -d) ; do
         # Except and accept domains without (DNSSEC); work around broken domains
         echo "  domain-insecure: $domain"
       done
@@ -576,6 +576,15 @@ unbound_conf() {
     } >> "$UB_CORE_CONF"
   fi
 
+  if  [ -n "$UB_LIST_PRIVATE" ] ; then
+    {
+	  for domain in $(echo $UB_LIST_PRIVATE | /opt/bin/base64 -d) ; do
+        # Except and accept domains without (DNSSEC); work around broken domains
+        echo "  private-domain: $domain"
+      done
+      echo
+    } >> "$UB_CORE_CONF"
+  fi
 
   # if [ "$UB_B_LOCL_SERV" -gt 0 ] ; then
     # {
@@ -621,6 +630,7 @@ unbound_uci() {
   UB_B_LOCL_BLCK=$(am_settings_get unbound_rebind_localhost); [ -z "$UB_B_LOCL_BLCK" ] && UB_B_LOCL_BLCK=1
 #  UB_B_LOCL_SERV=$(am_settings_get unbound_localservice); [ -z "$UB_B_LOCL_SERV" ] && UB_B_LOCL_SERV=1
   UB_LIST_INSECURE="$(am_settings_get unbound_domain_insecure)"
+  UB_LIST_PRIVATE="$(am_settings_get unbound_domain_rebindok)"
   UB_B_NTP_BOOT=$(am_settings_get unbound_validator_ntp); [ -z "$UB_B_NTP_BOOT" ] && UB_B_NTP_BOOT=1
   UB_B_STATSLOG=$(am_settings_get unbound_statslog); [ -z "$UB_B_STATSLOG" ] && UB_B_STATSLOG=0
   

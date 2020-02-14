@@ -20,6 +20,7 @@
 <script language="JavaScript" type="text/javascript" src="/tmmenu.js"></script>
 <script language="JavaSCript" type="text/javascript" src="/js/jquery.js"></script>
 <script language="JavaScript" type="text/javascript" src="/disk_functions.js"></script>
+<script language="JavaScript" type="text/javascript" src="/base64.js"></script>
 
 <script>
 var custom_settings = <% get_custom_settings(); %>;
@@ -125,9 +126,14 @@ function initial(){
                 document.form.unbound_rebind_localhost.value = custom_settings.unbound_rebind_localhost;
 
         if (custom_settings.unbound_domain_insecure == undefined)
-                document.getElementById('unbound_domain_insecure').value = "";  // TODO Get NTP server 1 and 2 from nvram
+                document.getElementById('unbound_domain_insecure').value ="<% nvram_get("ntp_server0"); %> <% nvram_get("ntp_server1"); %>";  // TODO Get NTP server 1 and 2 from nvram
         else
-                document.getElementById('unbound_domain_insecure').value = custom_settings.unbound_domain_insecure;
+                document.getElementById('unbound_domain_insecure').value = Base64.decode(custom_settings.unbound_domain_insecure);
+
+        if (custom_settings.unbound_domain_rebindok == undefined)
+                document.getElementById('unbound_domain_rebindok').value = "";  // TODO Get NTP server 1 and 2 from nvram
+        else
+                document.getElementById('unbound_domain_rebindok').value = Base64.decode(custom_settings.unbound_domain_rebindok);
 
         if (custom_settings.unbound_validator_ntp == undefined)
                 document.form.unbound_validator_ntp.value = "0";
@@ -139,7 +145,8 @@ function initial(){
         else
                 document.form.unbound_statslog.value = custom_settings.unbound_statslog;
 
-		hide_dnssec(getRadioValue(document.form.unbound_dnssec));
+		hide_dnsrebind(getRadioValue(document.form.unbound_rebind_protection));
+		hide_dnssec(getRadioValue(document.form.unbound_validator));
 }
 
 function hide_dns64(_value){
@@ -148,6 +155,10 @@ function hide_dns64(_value){
 function hide_dnssec(_value){
         showhide("dnssecdom_tr", (_value == "1"));
         showhide("dnssecboot_tr", (_value == "1"));
+}
+function hide_dnsrebind(_value){
+        showhide("dnsrebdom_tr", (_value == "1"));
+        showhide("dnsreblocal_tr", (_value == "1"));
 }
 function applySettings(){
 	if (!validator.numberRange(document.form.unbound_edns_size, 512, 4096) ||
@@ -175,7 +186,8 @@ function applySettings(){
         custom_settings.unbound_ttl_min = document.getElementById('unbound_ttl_min').value;
         custom_settings.unbound_rebind_protection = document.form.unbound_rebind_protection.value;
         custom_settings.unbound_rebind_localhost = document.form.unbound_rebind_localhost.value;
-        custom_settings.unbound_domain_insecure = document.getElementById('unbound_domain_insecure').value;
+        custom_settings.unbound_domain_rebindok = Base64.encode(document.getElementById('unbound_domain_rebindok').value);
+        custom_settings.unbound_domain_insecure = Base64.encode(document.getElementById('unbound_domain_insecure').value);
         custom_settings.unbound_validator_ntp = document.form.unbound_validator_ntp.value;
         custom_settings.unbound_statslog = document.form.unbound_statslog.value;
 		
@@ -282,13 +294,13 @@ function applySettings(){
                 </td>
         </tr>
         <tr id="dnssecdom_tr">
-                <th>Skip DNSSEC Domains</th>
+                <th>Ignore DNSSEC Domains</th>
                 <td>
                         <textarea rows="1" class="textarea_ssh_table" id="unbound_domain_insecure" spellcheck="false" name="unbound_domain_insecure" cols="50" maxlength="2999"></textarea>
                 </td>
         </tr>
         <tr id="dnssecboot_tr">
-                <th>Disable DNSSEC at Boot</th>
+                <th>Disable DNSSEC before NTP sync</th>
                 <td>
                         <input type="radio" name="unbound_validator_ntp" class="input" value="1" >Yes
 						<input type="radio" name="unbound_validator_ntp" class="input" value="0" >No
@@ -310,7 +322,7 @@ function applySettings(){
                 </td>
         </tr>
         <tr>
-                <th>Log Verbosity</th>
+                <th>Logging Level</th>
                 <td>
                         <select name="unbound_verbosity" class="input_option">
 						<option value="0">0-Error</option>
@@ -381,7 +393,7 @@ function applySettings(){
                 <th>Minimum TTL</th>
                 <td>
                         <input type="text" maxlength="4" class="input_6_table" id="unbound_ttl_min" onKeyPress="return validator.isNumber(this,event);" value="0">&nbsp;seconds
-						<span>Default: 120</span>
+						<span>Default: 0 Max: 1800</span>
                 </td>
         </tr>
 		<thead>
@@ -411,15 +423,21 @@ function applySettings(){
         <tr>
                 <th>DNS Rebind Protection</th>
                 <td>
-                        <input type="radio" name="unbound_rebind_protection" class="input" value="1" >Yes
-						<input type="radio" name="unbound_rebind_protection" class="input" value="0" >No
+                        <input type="radio" name="unbound_rebind_protection" class="input" onclick="hide_dnsrebind(this.value);" value="1" >Yes
+						<input type="radio" name="unbound_rebind_protection" class="input" onclick="hide_dnsrebind(this.value);" value="0" >No
                 </td>
         </tr>
-        <tr>
-                <th>Rebind localhost</th>
+        <tr id="dnsreblocal_tr">
+                <th>Block localhost responses</th>
                 <td>
                         <input type="radio" name="unbound_rebind_localhost" class="input" value="1" >Yes
 						<input type="radio" name="unbound_rebind_localhost" class="input" value="0" >No
+                </td>
+        </tr>
+        <tr id="dnsrebdom_tr">
+                <th>Whitelisted rebind domains</th>
+                <td>
+                        <textarea rows="1" class="textarea_ssh_table" id="unbound_domain_rebindok" spellcheck="false" name="unbound_domain_rebindok" cols="50" maxlength="2999"></textarea>
                 </td>
         </tr>
 		<thead>
@@ -437,7 +455,7 @@ function applySettings(){
         <tr id="dns64pre_tr">
                 <th>DNS64 Prefix</th>
                 <td>
-                        <input type="text" maxlength="20" class="input_20_table" id="unbound_dns64_prefix" onKeyPress="return validator.isNumber(this,event);" value="0">
+                        <input type="text" maxlength="20" class="input_20_table" id="unbound_dns64_prefix" value="">
                 </td>
         </tr>
         <tr>
