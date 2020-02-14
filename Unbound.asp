@@ -207,8 +207,8 @@ function applySettings(){
 <div id="Loading" class="popup_bg"></div>
 <iframe name="hidden_frame" id="hidden_frame" src="" width="0" height="0" frameborder="0"></iframe>
 <form method="post" name="form" action="start_apply.htm" target="hidden_frame">
-<input type="hidden" name="current_page" value="MyPage.asp">
-<input type="hidden" name="next_page" value="MyPage.asp">
+<input type="hidden" name="current_page" value="Unbound.asp">
+<input type="hidden" name="next_page" value="Unbound.asp">
 <input type="hidden" name="group_id" value="">
 <input type="hidden" name="modified" value="0">
 <input type="hidden" name="action_mode" value="apply">
