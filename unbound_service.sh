@@ -263,8 +263,7 @@ unbound_conf() {
   fi
 
 
-  if [ "$UB_N_THREADS" -gt 1 ] \
-  && /opt/sbin/unbound -V | grep -q "Linked libs:.*libevent" ; then
+  if /opt/sbin/unbound -V | grep -q "Linked libs:.*libevent" ; then
     # heavy variant using "threads" may need substantial resources
     echo "  num-threads: 2" >> "$UB_CORE_CONF"
   else
@@ -284,11 +283,20 @@ unbound_conf() {
     if [ "$UB_D_LOGDEST" == "syslog" ] ; then
 		echo "  use-syslog: yes"
 	else
-		echo "  use-syslog: no"	
 		echo "  logfile: $UB_VARDIR/unbound.log"
 	fi
-    echo "  statistics-interval: 0"
-    echo "  statistics-cumulative: no"
+    echo "  log-time-ascii: yes"
+    if [ "$UB_D_LOGEXTRA" == "1" ] ; then
+		echo "  log-tag-queryreply: yes"
+		echo "  log-servfail: yes"
+		echo "  log-local-actions: yes"
+    fi
+    if [ "$UB_B_STATSLOG" == "1" ] ; then
+		echo "  statistics-interval: 3600"
+	else
+		echo "  statistics-interval: 0"
+	fi
+	echo "  statistics-cumulative: no"
   } >> "$UB_CORE_CONF"
 
 
@@ -319,37 +327,10 @@ unbound_conf() {
         echo "  edns-buffer-size: $UB_N_EDNS_SIZE"
         echo "  port: $UB_N_RX_PORT"
         echo "  outgoing-port-permit: 10240-65535"
-        echo "  interface: 0.0.0.0"
+        echo "  interface: 127.0.0.1"
         echo "  outgoing-interface: 0.0.0.0"
         echo "  do-ip4: yes"
         echo "  do-ip6: no"
-        echo
-      } >> "$UB_CORE_CONF"
-      ;;
-
-    ip6_only)
-      {
-        echo "  edns-buffer-size: $UB_N_EDNS_SIZE"
-        echo "  port: $UB_N_RX_PORT"
-        echo "  outgoing-port-permit: 10240-65535"
-        echo "  interface: ::0"
-        echo "  outgoing-interface: ::0"
-        echo "  do-ip4: no"
-        echo "  do-ip6: yes"
-        echo
-      } >> "$UB_CORE_CONF"
-      ;;
-
-   ip6_local)
-      {
-        echo "  edns-buffer-size: $UB_N_EDNS_SIZE"
-        echo "  port: $UB_N_RX_PORT"
-        echo "  outgoing-port-permit: 10240-65535"
-        echo "  interface: 0.0.0.0"
-        echo "  interface: ::0"
-        echo "  outgoing-interface: 0.0.0.0"
-        echo "  do-ip4: yes"
-        echo "  do-ip6: yes"
         echo
       } >> "$UB_CORE_CONF"
       ;;
@@ -359,8 +340,8 @@ unbound_conf() {
         echo "  edns-buffer-size: $UB_N_EDNS_SIZE"
         echo "  port: $UB_N_RX_PORT"
         echo "  outgoing-port-permit: 10240-65535"
-        echo "  interface: 0.0.0.0"
-        echo "  interface: ::0"
+        echo "  interface: 127.0.0.1"
+        echo "  interface: ::1"
         echo "  outgoing-interface: 0.0.0.0"
         echo "  outgoing-interface: ::0"
         echo "  do-ip4: yes"
@@ -376,8 +357,8 @@ unbound_conf() {
         echo "  edns-buffer-size: $UB_N_EDNS_SIZE"
         echo "  port: $UB_N_RX_PORT"
         echo "  outgoing-port-permit: 10240-65535"
-        echo "  interface: 0.0.0.0"
-        echo "  interface: ::0"
+        echo "  interface: 127.0.0.1"
+        echo "  interface: ::1"
         echo "  outgoing-interface: 0.0.0.0"
         echo "  outgoing-interface: ::0"
         echo "  do-ip4: yes"
@@ -549,14 +530,12 @@ unbound_conf() {
   } >> "$UB_CORE_CONF"
 
 
-  if [ "$UB_B_HIDE_BIND" -gt 0 ] ; then
-    {
-      # Block server id and version DNS TXT records
-      echo "  hide-identity: yes"
-      echo "  hide-version: yes"
-      echo
-    } >> "$UB_CORE_CONF"
-  fi
+  {
+    # Block server id and version DNS TXT records
+    echo "  hide-identity: yes"
+    echo "  hide-version: yes"
+    echo
+  } >> "$UB_CORE_CONF"
 
 
   if [ "$UB_D_PRIV_BLCK" -gt 0 ] ; then
@@ -598,23 +577,23 @@ unbound_conf() {
   fi
 
 
-  if [ "$UB_B_LOCL_SERV" -gt 0 ] ; then
-    {
-      ifsubnet="$(netstat -rn | grep br0$ | cut -d' ' -f 1)/24"
-      echo "  access-control: ${ifsubnet} allow"
-      echo "  access-control: 127.0.0.0/8 allow"
-      echo "  access-control: ::1/128 allow"
-      echo "  access-control: fe80::/10 allow"
-      echo
-    } >> "$UB_CORE_CONF"
+  # if [ "$UB_B_LOCL_SERV" -gt 0 ] ; then
+    # {
+      # ifsubnet="$(netstat -rn | grep br0$ | cut -d' ' -f 1)/24"
+      # echo "  access-control: ${ifsubnet} allow"
+      # echo "  access-control: 127.0.0.0/8 allow"
+      # echo "  access-control: ::1/128 allow"
+      # echo "  access-control: fe80::/10 allow"
+      # echo
+    # } >> "$UB_CORE_CONF"
 
-  else
-    {
-      echo "  access-control: 0.0.0.0/0 allow"
-      echo "  access-control: ::0/0 allow"
-      echo
-    } >> "$UB_CORE_CONF"
-  fi
+  # else
+    # {
+      # echo "  access-control: 0.0.0.0/0 allow"
+      # echo "  access-control: ::0/0 allow"
+      # echo
+    # } >> "$UB_CORE_CONF"
+  # fi
 }
 
 ##############################################################################
@@ -623,8 +602,8 @@ unbound_uci() {
 
   UB_D_CONTROL=$(am_settings_get unbound_control); [ -z "$UB_D_CONTROL" ] && UB_D_CONTROL=1
   UB_B_DNSSEC=$(am_settings_get unbound_validator); [ -z "$UB_B_DNSSEC" ] && UB_B_DNSSEC=1
-  UB_N_THREADS=$(am_settings_get unbound_num_threads); [ -z "$UB_N_THREADS" ] && UB_N_THREADS=1
   UB_D_LOGDEST=$(am_settings_get unbound_logdest); [ -z "$UB_D_LOGDEST" ] && UB_D_LOGDEST=syslog
+  UB_D_LOGEXTRA=$(am_settings_get unbound_logextra); [ -z "$UB_D_LOGEXTRA" ] && UB_D_LOGEXTRA=0
   UB_D_VERBOSE=$(am_settings_get unbound_verbosity); [ -z "$UB_D_VERBOSE" ] && UB_D_VERBOSE=1
   UB_B_EXT_STATS=$(am_settings_get unbound_extended_stats); [ -z "$UB_B_EXT_STATS" ] && UB_B_EXT_STATS=1
   UB_D_PROTOCOL=$(am_settings_get unbound_protocol); [ -z "$UB_D_PROTOCOL" ] && UB_D_PROTOCOL=ip4_only
@@ -640,9 +619,10 @@ unbound_uci() {
   UB_TTL_MIN=$(am_settings_get unbound_ttl_min); [ -z "$UB_TTL_MIN" ] && UB_TTL_MIN=120
   UB_D_PRIV_BLCK=$(am_settings_get unbound_rebind_protection); [ -z "$UB_D_PRIV_BLCK" ] && UB_D_PRIV_BLCK=1
   UB_B_LOCL_BLCK=$(am_settings_get unbound_rebind_localhost); [ -z "$UB_B_LOCL_BLCK" ] && UB_B_LOCL_BLCK=1
-  UB_B_LOCL_SERV=$(am_settings_get unbound_localservice); [ -z "$UB_B_LOCL_SERV" ] && UB_B_LOCL_SERV=1
+#  UB_B_LOCL_SERV=$(am_settings_get unbound_localservice); [ -z "$UB_B_LOCL_SERV" ] && UB_B_LOCL_SERV=1
   UB_LIST_INSECURE="$(am_settings_get unbound_domain_insecure)"
   UB_B_NTP_BOOT=$(am_settings_get unbound_validator_ntp); [ -z "$UB_B_NTP_BOOT" ] && UB_B_NTP_BOOT=1
+  UB_B_STATSLOG=$(am_settings_get unbound_statslog); [ -z "$UB_B_STATSLOG" ] && UB_B_STATSLOG=0
   
   if [ "$UB_N_EDNS_SIZE" -lt 512 ] || [ 4096 -lt "$UB_N_EDNS_SIZE" ] ; then
     logger -t unbound -s "edns_size exceeds range, using default"

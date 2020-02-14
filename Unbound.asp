@@ -42,15 +42,15 @@ function initial(){
         else
                 document.form.unbound_validator.value = custom_settings.unbound_validator;
 
-        if (custom_settings.unbound_num_threads == undefined)
-                document.getElementById('unbound_num_threads').value = "1";
-        else
-                document.getElementById('unbound_num_threads').value = custom_settings.unbound_num_threads;
-
         if (custom_settings.unbound_logdest == undefined)
                 document.form.unbound_logdest.value = "syslog";
         else
                 document.form.unbound_logdest.value = custom_settings.unbound_logdest;
+
+        if (custom_settings.unbound_logextra == undefined)
+                document.form.unbound_logextra.value = "0";
+        else
+                document.form.unbound_logextra.value = custom_settings.unbound_logextra;
 
         if (custom_settings.unbound_verbosity == undefined)
                 document.form.unbound_verbosity.value = "1";
@@ -87,6 +87,8 @@ function initial(){
         else
                 document.form.unbound_dns64.value = custom_settings.unbound_dns64;
 
+        hide_dns64(getRadioValue(document.form.unbound_dns64));
+		
         if (custom_settings.unbound_dns64_prefix == undefined)
                 document.getElementById('unbound_dns64_prefix').value = "64:ff9b::/96";
         else
@@ -107,11 +109,6 @@ function initial(){
         else
                 document.form.unbound_query_min_strict.value = custom_settings.unbound_query_min_strict;
 
-        if (custom_settings.unbound_hide_binddata == undefined)
-                document.form.unbound_hide_binddata.value = "1";
-        else
-                document.form.unbound_hide_binddata.value = custom_settings.unbound_hide_binddata;
-
         if (custom_settings.unbound_ttl_min == undefined)
                 document.getElementById('unbound_ttl_min').value = "120";
         else
@@ -127,11 +124,6 @@ function initial(){
         else
                 document.form.unbound_rebind_localhost.value = custom_settings.unbound_rebind_localhost;
 
-        if (custom_settings.unbound_localservice == undefined)
-                document.form.unbound_localservice.value = "1";
-        else
-                document.form.unbound_localservice.value = custom_settings.unbound_localservice;
-
         if (custom_settings.unbound_domain_insecure == undefined)
                 document.getElementById('unbound_domain_insecure').value = "";  // TODO Get NTP server 1 and 2 from nvram
         else
@@ -141,11 +133,24 @@ function initial(){
                 document.form.unbound_validator_ntp.value = "0";
         else
                 document.form.unbound_validator_ntp.value = custom_settings.unbound_validator_ntp;
+		
+        if (custom_settings.unbound_statslog == undefined)
+                document.form.unbound_statslog.value = "0";
+        else
+                document.form.unbound_statslog.value = custom_settings.unbound_statslog;
+
+		hide_dnssec(getRadioValue(document.form.unbound_dnssec));
 }
 
+function hide_dns64(_value){
+        showhide("dns64pre_tr", (_value == "1"));
+}
+function hide_dnssec(_value){
+        showhide("dnssecdom_tr", (_value == "1"));
+        showhide("dnssecboot_tr", (_value == "1"));
+}
 function applySettings(){
-	if (!validator.numberRange(document.form.unbound_num_threads, 1, 8) ||
-	    !validator.numberRange(document.form.unbound_edns_size, 512, 65552) ||
+	if (!validator.numberRange(document.form.unbound_edns_size, 512, 4096) ||
 	    !validator.numberRange(document.form.unbound_listen_port, 1, 65535) ||
 	    !validator.numberRange(document.form.unbound_ttl_min, 0, 1800))
 		return false;
@@ -154,8 +159,8 @@ function applySettings(){
         custom_settings.unbound_enable = document.form.unbound_enable.value;
         custom_settings.unbound_control = document.form.unbound_control.value;
         custom_settings.unbound_validator = document.form.unbound_validator.value;
-        custom_settings.unbound_num_threads = document.getElementById('unbound_num_threads').value;
         custom_settings.unbound_logdest = document.form.unbound_logdest.value;
+        custom_settings.unbound_logextra = document.form.unbound_logextra.value;
         custom_settings.unbound_verbosity = document.form.unbound_verbosity.value;
         custom_settings.unbound_extended_stats = document.form.unbound_extended_stats.value;
         custom_settings.unbound_protocol = document.form.unbound_protocol.value;
@@ -167,13 +172,12 @@ function applySettings(){
         custom_settings.unbound_recursion = document.form.unbound_recursion.value;
         custom_settings.unbound_query_minimize = document.form.unbound_query_minimize.value;
         custom_settings.unbound_query_min_strict = document.form.unbound_query_min_strict.value;
-        custom_settings.unbound_hide_binddata = document.form.unbound_hide_binddata.value;
         custom_settings.unbound_ttl_min = document.getElementById('unbound_ttl_min').value;
         custom_settings.unbound_rebind_protection = document.form.unbound_rebind_protection.value;
         custom_settings.unbound_rebind_localhost = document.form.unbound_rebind_localhost.value;
-        custom_settings.unbound_localservice = document.form.unbound_localservice.value;
         custom_settings.unbound_domain_insecure = document.getElementById('unbound_domain_insecure').value;
         custom_settings.unbound_validator_ntp = document.form.unbound_validator_ntp.value;
+        custom_settings.unbound_statslog = document.form.unbound_statslog.value;
 		
         /* Store object as a string in the amng_custom hidden input field */
         document.getElementById('amng_custom').value = JSON.stringify(custom_settings);
@@ -225,7 +229,11 @@ function applySettings(){
 <div class="formfontdesc">Unbound is a validating, recursive, caching DNS resolver. It is designed to be fast and lean and incorporates modern features based on open standards.</div>
 
 <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
-
+		<thead>
+			<tr>
+				<td colspan="2">Basic Configuration</td>
+			</tr>
+		</thead>
         <tr>
                 <th>Enable Unbound</th>
                 <td>
@@ -234,7 +242,7 @@ function applySettings(){
 				</td>
         </tr>
         <tr>
-                <th>IP Protocols</th>
+                <th>IP Protocol</th>
                 <td>
                         <select name="unbound_protocol" class="input_option">
 						<option value="ip4_only">IPv4 Only</option>
@@ -255,33 +263,42 @@ function applySettings(){
                 <th>Unbound Control Setup</th>
                 <td>
                         <select name="unbound_control" class="input_option">
-						<option value="0">Disabled</option>
-						<option value="1">Localhost No SSL</option>
-						<option value="2">Localhost SSL</option>
+						<option value="1">localhost No SSL</option>
+						<option value="2">localhost SSL</option>
 						<option value="3">LAN SSL</option>
 						</select>
                 </td>
         </tr>
+		<thead>
+			<tr>
+				<td colspan="2">DNSSEC Configuration</td>
+			</tr>
+		</thead>
         <tr>
                 <th>Enable DNSSEC?</th>
                 <td>
-                        <input type="radio" name="unbound_validator" class="input" value="1" >Yes
-						<input type="radio" name="unbound_validator" class="input" value="0" >No
+                        <input type="radio" name="unbound_validator" class="input" value="1" onclick="hide_dnssec(this.value);">Yes
+						<input type="radio" name="unbound_validator" class="input" value="0" onclick="hide_dnssec(this.value);">No
                 </td>
         </tr>
-        <tr>
+        <tr id="dnssecdom_tr">
                 <th>Skip DNSSEC Domains</th>
                 <td>
-                        <textarea rows="1" class="textarea_ssh_table" id="unbound_domain_insecure" spellcheck="false" name="unbound_domain_insecure" cols="65" maxlength="2999"></textarea>
+                        <textarea rows="1" class="textarea_ssh_table" id="unbound_domain_insecure" spellcheck="false" name="unbound_domain_insecure" cols="50" maxlength="2999"></textarea>
                 </td>
         </tr>
-        <tr>
+        <tr id="dnssecboot_tr">
                 <th>Disable DNSSEC at Boot</th>
                 <td>
                         <input type="radio" name="unbound_validator_ntp" class="input" value="1" >Yes
 						<input type="radio" name="unbound_validator_ntp" class="input" value="0" >No
                 </td>
         </tr>
+		<thead>
+			<tr>
+				<td colspan="2">Log Configuration</td>
+			</tr>
+		</thead>
         <tr>
                 <th>Log Destination</th>
                 <td>
@@ -307,6 +324,27 @@ function applySettings(){
                 </td>
         </tr>
         <tr>
+                <th>Enhanced Logging</th>
+                <td>
+                        <input type="radio" name="unbound_logextra" class="input" value="1" >Yes
+						<input type="radio" name="unbound_logextra" class="input" value="0" >No
+						<span>Query tags, SERVFAIL, local actions</span>
+                </td>
+        </tr>
+        <tr>
+                <th>Send Stats to Log Hourly</th>
+                <td>
+                        <input type="radio" name="unbound_statslog" class="input" value="1" >Yes
+						<input type="radio" name="unbound_statslog" class="input" value="0" >No
+                </td>
+        </tr>
+        <tr>		
+		<thead>
+			<tr>
+				<td colspan="2">Performance Tuning</td>
+			</tr>
+		</thead>
+        <tr>
                 <th>Extended Statistics</th>
                 <td>
                         <input type="radio" name="unbound_extended_stats" class="input" value="1" >Yes
@@ -316,15 +354,8 @@ function applySettings(){
         <tr>
                 <th>EDNS Buffer Size</th>
                 <td>
-                        <input type="text" maxlength="5" class="input_6_table" id="unbound_edns_size" onKeyPress="return validator.isNumber(this,event);" value="0">
+                        <input type="text" maxlength="5" class="input_6_table" id="unbound_edns_size" onKeyPress="return validator.isNumber(this,event);" value="0">&nbsp;bytes
 						<span>Default: 4096</span>
-                </td>
-        </tr>
-        <tr>
-                <th>Number of Threads</th>
-                <td>
-                        <input type="text" maxlength="2" class="input_6_table" id="unbound_num_threads" onKeyPress="return validator.isNumber(this,event);" value="0">
-						<span>Default: 1</span>
                 </td>
         </tr>
         <tr>
@@ -347,6 +378,18 @@ function applySettings(){
                 </td>
         </tr>
         <tr>
+                <th>Minimum TTL</th>
+                <td>
+                        <input type="text" maxlength="4" class="input_6_table" id="unbound_ttl_min" onKeyPress="return validator.isNumber(this,event);" value="0">&nbsp;seconds
+						<span>Default: 120</span>
+                </td>
+        </tr>
+		<thead>
+			<tr>
+				<td colspan="2">Privacy Settings</td>
+			</tr>
+		</thead>
+        <tr>
                 <th>QNAME Minimization</th>
                 <td>
                         <input type="radio" name="unbound_query_minimize" class="input" value="1" >Yes
@@ -360,20 +403,11 @@ function applySettings(){
 						<input type="radio" name="unbound_query_min_strict" class="input" value="0" >No
                 </td>
         </tr>
-        <tr>
-                <th>Hide Unbound Identity</th>
-                <td>
-                        <input type="radio" name="unbound_hide_binddata" class="input" value="1" >Yes
-						<input type="radio" name="unbound_hide_binddata" class="input" value="0" >No
-                </td>
-        </tr>
-        <tr>
-                <th>Minimum TTL</th>
-                <td>
-                        <input type="text" maxlength="4" class="input_6_table" id="unbound_ttl_min" onKeyPress="return validator.isNumber(this,event);" value="0">
-						<span>Default: 120</span>
-                </td>
-        </tr>
+		<thead>
+			<tr>
+				<td colspan="2">Security Settings</td>
+			</tr>
+		</thead>
         <tr>
                 <th>DNS Rebind Protection</th>
                 <td>
@@ -388,21 +422,19 @@ function applySettings(){
 						<input type="radio" name="unbound_rebind_localhost" class="input" value="0" >No
                 </td>
         </tr>
-        <tr>
-                <th>Listen only on localhost</th>
-                <td>
-                        <input type="radio" name="unbound_localservice" class="input" value="1" >Yes
-						<input type="radio" name="unbound_localservice" class="input" value="0" >No
-                </td>
-        </tr>
+		<thead>
+			<tr>
+				<td colspan="2">Other Configuration</td>
+			</tr>
+		</thead>
         <tr>
                 <th>Enable DNS64</th>
                 <td>
-                        <input type="radio" name="unbound_dns64" class="input" value="1" >Yes
-						<input type="radio" name="unbound_dns64" class="input" value="0" >No
+                        <input type="radio" name="unbound_dns64" class="input" onclick="hide_dns64(this.value);" value="1" >Yes
+						<input type="radio" name="unbound_dns64" class="input" onclick="hide_dns64(this.value);" value="0" >No
                 </td>
         </tr>
-        <tr>
+        <tr id="dns64pre_tr">
                 <th>DNS64 Prefix</th>
                 <td>
                         <input type="text" maxlength="20" class="input_20_table" id="unbound_dns64_prefix" onKeyPress="return validator.isNumber(this,event);" value="0">
