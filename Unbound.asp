@@ -62,7 +62,7 @@ function initial(){
                 document.form.unbound_extended_stats.value = "0";
         else
                 document.form.unbound_extended_stats.value = custom_settings.unbound_extended_stats;
-        
+
 		if (custom_settings.unbound_protocol == undefined)
                 document.form.unbound_protocol.value = "ip4_only";
         else
@@ -89,7 +89,7 @@ function initial(){
                 document.form.unbound_dns64.value = custom_settings.unbound_dns64;
 
         hide_dns64(getRadioValue(document.form.unbound_dns64));
-		
+
         if (custom_settings.unbound_dns64_prefix == undefined)
                 document.getElementById('unbound_dns64_prefix').value = "64:ff9b::/96";
         else
@@ -139,7 +139,7 @@ function initial(){
                 document.form.unbound_validator_ntp.value = "0";
         else
                 document.form.unbound_validator_ntp.value = custom_settings.unbound_validator_ntp;
-		
+
         if (custom_settings.unbound_statslog == undefined)
                 document.form.unbound_statslog.value = "0";
         else
@@ -165,7 +165,12 @@ function applySettings(){
 	    !validator.numberRange(document.form.unbound_listen_port, 1, 65535) ||
 	    !validator.numberRange(document.form.unbound_ttl_min, 0, 1800))
 		return false;
-		
+
+  if (document.form.unbound_listen_port.value == '53') {
+    alert("Port 53 conflicts with dnsmasq. Choose another port.");
+    return false;
+    }
+
         /* Retrieve value from input fields, and store in object */
         custom_settings.unbound_enable = document.form.unbound_enable.value;
         custom_settings.unbound_control = document.form.unbound_control.value;
@@ -190,7 +195,7 @@ function applySettings(){
         custom_settings.unbound_domain_insecure = Base64.encode(document.getElementById('unbound_domain_insecure').value);
         custom_settings.unbound_validator_ntp = document.form.unbound_validator_ntp.value;
         custom_settings.unbound_statslog = document.form.unbound_statslog.value;
-		
+
         /* Store object as a string in the amng_custom hidden input field */
         document.getElementById('amng_custom').value = JSON.stringify(custom_settings);
 
@@ -350,7 +355,7 @@ function applySettings(){
 						<input type="radio" name="unbound_statslog" class="input" value="0" >No
                 </td>
         </tr>
-        <tr>		
+        <tr>
 		<thead>
 			<tr>
 				<td colspan="2">Performance Tuning</td>
