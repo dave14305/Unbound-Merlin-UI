@@ -144,6 +144,12 @@ function initial(){
 }
 
 function applySettings(){
+	if (!validator.numberRange(document.form.unbound_num_threads, 1, 8) ||
+	    !validator.numberRange(document.form.unbound_edns_size, 512, 65552) ||
+	    !validator.numberRange(document.form.unbound_listen_port, 1, 65535) ||
+	    !validator.numberRange(document.form.unbound_ttl_min, 0, 1800))
+		return false;
+		
         /* Retrieve value from input fields, and store in object */
         custom_settings.unbound_enable = document.form.unbound_enable.value;
         custom_settings.unbound_control = document.form.unbound_control.value;
@@ -310,7 +316,7 @@ function applySettings(){
         <tr>
                 <th>EDNS Buffer Size</th>
                 <td>
-                        <input type="text" maxlength="4" class="input_6_table" id="unbound_edns_size" onKeyPress="return validator.isNumber(this,event);" value="0">
+                        <input type="text" maxlength="5" class="input_6_table" id="unbound_edns_size" onKeyPress="return validator.isNumber(this,event);" value="0">
 						<span>Default: 4096</span>
                 </td>
         </tr>
