@@ -23,7 +23,7 @@
 #
 ##############################################################################
 
-# Adapted for ASUSWRT-Merlin from OpenWRT unbound.sh 
+# Adapted for ASUSWRT-Merlin from OpenWRT unbound.sh
 
 # where are we?
 UB_LIBDIR=/opt/var/lib/unbound
@@ -182,7 +182,6 @@ unbound_control() {
         echo "  control-enable: yes"
         echo "  control-use-cert: no"
         echo "  control-interface: 127.0.0.1"
-        echo "  control-interface: ::1"
         echo
       } >> "$UB_CTRL_CONF"
       ;;
@@ -194,7 +193,6 @@ unbound_control() {
         echo "  control-enable: yes"
         echo "  control-use-cert: yes"
         echo "  control-interface: 127.0.0.1"
-        echo "  control-interface: ::1"
         echo "  server-key-file: $UB_SRVKEY_FILE"
         echo "  server-cert-file: $UB_SRVPEM_FILE"
         echo "  control-key-file: $UB_CTLKEY_FILE"
@@ -212,7 +210,9 @@ unbound_control() {
         echo "  control-enable: yes"
         echo "  control-use-cert: yes"
         echo "  control-interface: 0.0.0.0"
-        echo "  control-interface: ::0"
+        if [ "$(nvram get ipv6_service)" != "disabled" ]; then
+          echo "  control-interface: ::0"
+        fi
         echo "  server-key-file: $UB_SRVKEY_FILE"
         echo "  server-cert-file: $UB_SRVPEM_FILE"
         echo "  control-key-file: $UB_CTLKEY_FILE"
@@ -633,7 +633,7 @@ unbound_uci() {
   UB_LIST_PRIVATE="$(am_settings_get unbound_domain_rebindok)"
   UB_B_NTP_BOOT=$(am_settings_get unbound_validator_ntp); [ -z "$UB_B_NTP_BOOT" ] && UB_B_NTP_BOOT=1
   UB_B_STATSLOG=$(am_settings_get unbound_statslog); [ -z "$UB_B_STATSLOG" ] && UB_B_STATSLOG=0
-  
+
   if [ "$UB_N_EDNS_SIZE" -lt 512 ] || [ 4096 -lt "$UB_N_EDNS_SIZE" ] ; then
     logger -t unbound -s "edns_size exceeds range, using default"
     UB_N_EDNS_SIZE=1280
@@ -711,4 +711,3 @@ unbound_include() {
   logger -t unbound "Unbound Configuration complete."
 
 ##############################################################################
-
