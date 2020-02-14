@@ -296,7 +296,7 @@ function applySettings(){
         <tr id="dnssecdom_tr">
                 <th>Ignore DNSSEC Domains</th>
                 <td>
-                        <textarea rows="1" class="textarea_ssh_table" id="unbound_domain_insecure" spellcheck="false" name="unbound_domain_insecure" cols="50" maxlength="2999"></textarea>
+                        <textarea rows="1" class="textarea_ssh_table" id="unbound_domain_insecure" spellcheck="false" name="unbound_domain_insecure" cols="50" maxlength="2249"></textarea>
                 </td>
         </tr>
         <tr id="dnssecboot_tr">
@@ -437,7 +437,7 @@ function applySettings(){
         <tr id="dnsrebdom_tr">
                 <th>Whitelisted rebind domains</th>
                 <td>
-                        <textarea rows="1" class="textarea_ssh_table" id="unbound_domain_rebindok" spellcheck="false" name="unbound_domain_rebindok" cols="50" maxlength="2999"></textarea>
+                        <textarea rows="1" class="textarea_ssh_table" id="unbound_domain_rebindok" spellcheck="false" name="unbound_domain_rebindok" cols="50" maxlength="2249"></textarea>
                 </td>
         </tr>
 		<thead>
