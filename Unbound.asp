@@ -74,7 +74,7 @@ function initial(){
                 document.getElementById('unbound_edns_size').value = custom_settings.unbound_edns_size;
 
         if (custom_settings.unbound_listen_port == undefined)
-                document.getElementById('unbound_listen_port').value = "0";
+                document.getElementById('unbound_listen_port').value = "53535";
         else
                 document.getElementById('unbound_listen_port').value = custom_settings.unbound_listen_port;
 
@@ -272,7 +272,7 @@ function applySettings(){
                 <th>Listen Port</th>
                 <td>
                         <input type="text" maxlength="5" class="input_6_table" id="unbound_listen_port" onKeyPress="return validator.isNumber(this,event);" value="0">
-						<span>Default: 53</span>
+						<span>Default: 53535</span>
 
                 </td>
         </tr>
