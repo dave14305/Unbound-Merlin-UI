@@ -34,7 +34,7 @@ fi
 sed -i "s/Unbound.asp/$am_webui_page/g" /www/user/$am_webui_page
 
 # Insert link at the end of the Tools menu.  Match partial string, since tabname can change between builds (if using an AS tag)
-sed -i "/url: \"Tools_OtherSettings.asp\", tabName:/a {url: \"$am_webui_page\", tabName: \"My Page\"}," /tmp/menuTree.js
+sed -i "/url: \"Tools_OtherSettings.asp\", tabName:/a {url: \"$am_webui_page\", tabName: \"Unbound\"}," /tmp/menuTree.js
 
 # sed and binding mounts don't work well together, so remount modified file
 umount /www/require/modules/menuTree.js && mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
