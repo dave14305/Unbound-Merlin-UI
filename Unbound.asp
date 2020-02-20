@@ -25,6 +25,27 @@
 <script>
 var custom_settings = <% get_custom_settings(); %>;
 
+function YazHint(hintid) {
+	var tag_name= document.getElementsByTagName('a');
+	for (var i=0;i<tag_name.length;i++){
+		tag_name[i].onmouseout=nd;
+	}
+	hinttext="Help text not yet defined";
+	if(hintid == 1) hinttext="Choose which IP protocol Unbound uses for external communication. Prefer IPv6 uses both IPv4 and IPv6 but gives preference to IPv6.";
+	if(hintid == 2) hinttext="UDP and TCP port that Unbound will listen on using the loopback interface. Avoid ports that are already in use by other services.";
+	if(hintid == 3) hinttext="Choose how unbound-control will be accessible and secured. If only allowing localhost access, the use of SSL certificates is optional.";
+	if(hintid == 4) hinttext="Allow Unbound to validate DNSSEC responses?";
+	if(hintid == 5) hinttext="Allow these domains to fail DNSSEC validation, e.g. before the clock is synced.";
+	if(hintid == 6) hinttext="Disable DNSSEC at Unbound startup if clock is not synced.";
+	if(hintid == 7) hinttext="Select the desination for Unbound log output. If using logging level greater than 1, use a logfile.";
+	if(hintid == 8) hinttext="The verbosity number, level 0 means no verbosity, only errors. Level 1 gives operational information. Level 2 gives detailed operational information. Level 3 gives query level information, output per query. Level 4 gives algorithm level information. Level 5 logs client identification for cache misses.";
+	if(hintid == 9) hinttext="Enable extra log details for queries and SERVFAIL messages.";
+	if(hintid == 10) hinttext="Write hourly statistics to the chosen log destination.";
+	if(hintid == 11) hinttext="Should LAN be able to initiate connections to Guest Network clients (but not the opposite)? Cannot be enabled if _TWOWAYTOGUEST is enabled";
+	if(hintid == 12) hinttext="Should Guest Network radio prevent clients from talking to each other?";
+	return overlib(hinttext, HAUTO, VAUTO);
+}
+
 function initial(){
         show_menu();
 
@@ -126,12 +147,12 @@ function initial(){
                 document.form.unbound_rebind_localhost.value = custom_settings.unbound_rebind_localhost;
 
         if (custom_settings.unbound_domain_insecure == undefined)
-                document.getElementById('unbound_domain_insecure').value ="<% nvram_get("ntp_server0"); %> <% nvram_get("ntp_server1"); %>";  // TODO Get NTP server 1 and 2 from nvram
+                document.getElementById('unbound_domain_insecure').value ="<% nvram_get("ntp_server0"); %> <% nvram_get("ntp_server1"); %>";
         else
                 document.getElementById('unbound_domain_insecure').value = Base64.decode(custom_settings.unbound_domain_insecure);
 
         if (custom_settings.unbound_domain_rebindok == undefined)
-                document.getElementById('unbound_domain_rebindok').value = "";  // TODO Get NTP server 1 and 2 from nvram
+                document.getElementById('unbound_domain_rebindok').value = "";
         else
                 document.getElementById('unbound_domain_rebindok').value = Base64.decode(custom_settings.unbound_domain_rebindok);
 
@@ -144,6 +165,11 @@ function initial(){
                 document.form.unbound_statslog.value = "0";
         else
                 document.form.unbound_statslog.value = custom_settings.unbound_statslog;
+
+        if (custom_settings.unbound_custom_server == undefined)
+                document.getElementById('unbound_custom_server').value ="";
+        else
+                document.getElementById('unbound_custom_server').value = Base64.decode(custom_settings.unbound_custom_server);
 
 		hide_dnsrebind(getRadioValue(document.form.unbound_rebind_protection));
 		hide_dnssec(getRadioValue(document.form.unbound_validator));
@@ -193,6 +219,7 @@ function applySettings(){
         custom_settings.unbound_rebind_localhost = document.form.unbound_rebind_localhost.value;
         custom_settings.unbound_domain_rebindok = Base64.encode(document.getElementById('unbound_domain_rebindok').value);
         custom_settings.unbound_domain_insecure = Base64.encode(document.getElementById('unbound_domain_insecure').value);
+        custom_settings.unbound_custom_server = Base64.encode(document.getElementById('unbound_custom_server').value);
         custom_settings.unbound_validator_ntp = document.form.unbound_validator_ntp.value;
         custom_settings.unbound_statslog = document.form.unbound_statslog.value;
 
@@ -259,7 +286,7 @@ function applySettings(){
 				</td>
         </tr>
         <tr>
-                <th>IP Protocol</th>
+                <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(1);">IP Protocol</a></th>
                 <td>
                         <select name="unbound_protocol" class="input_option">
 						<option value="ip4_only">IPv4 Only</option>
@@ -269,7 +296,7 @@ function applySettings(){
                 </td>
         </tr>
         <tr>
-                <th>Listen Port</th>
+                <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(2);">Listen Port</a></th>
                 <td>
                         <input type="text" maxlength="5" class="input_6_table" id="unbound_listen_port" onKeyPress="return validator.isNumber(this,event);" value="0">
 						<span>Default: 53535</span>
@@ -277,7 +304,7 @@ function applySettings(){
                 </td>
         </tr>
         <tr>
-                <th>Unbound Control Setup</th>
+                <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(3);">Unbound Control Setup</a></th>
                 <td>
                         <select name="unbound_control" class="input_option">
 						<option value="1">localhost No SSL</option>
@@ -292,20 +319,20 @@ function applySettings(){
 			</tr>
 		</thead>
         <tr>
-                <th>Enable DNSSEC?</th>
+                <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(4);">Enable DNSSEC?</a></th>
                 <td>
                         <input type="radio" name="unbound_validator" class="input" value="1" onclick="hide_dnssec(this.value);">Yes
 						<input type="radio" name="unbound_validator" class="input" value="0" onclick="hide_dnssec(this.value);">No
                 </td>
         </tr>
         <tr id="dnssecdom_tr">
-                <th>Ignore DNSSEC Domains</th>
+                <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(5);">Ignore DNSSEC Domains</a></th>
                 <td>
                         <textarea rows="1" class="textarea_ssh_table" id="unbound_domain_insecure" spellcheck="false" name="unbound_domain_insecure" cols="50" maxlength="2249"></textarea>
                 </td>
         </tr>
         <tr id="dnssecboot_tr">
-                <th>Disable DNSSEC before NTP sync</th>
+                <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(6);">Disable DNSSEC before NTP sync</a></th>
                 <td>
                         <input type="radio" name="unbound_validator_ntp" class="input" value="1" >Yes
 						<input type="radio" name="unbound_validator_ntp" class="input" value="0" >No
@@ -317,7 +344,7 @@ function applySettings(){
 			</tr>
 		</thead>
         <tr>
-                <th>Log Destination</th>
+                <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(7);">Log Destination</a></th>
                 <td>
                         <select name="unbound_logdest" class="input_option">
 						<option value="syslog">Syslog</option>
@@ -327,7 +354,7 @@ function applySettings(){
                 </td>
         </tr>
         <tr>
-                <th>Logging Level</th>
+                <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(8);">Logging Level</a></th>
                 <td>
                         <select name="unbound_verbosity" class="input_option">
 						<option value="0">0-Error</option>
@@ -341,7 +368,7 @@ function applySettings(){
                 </td>
         </tr>
         <tr>
-                <th>Enhanced Logging</th>
+                <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(9);">Enhanced Logging</a></th>
                 <td>
                         <input type="radio" name="unbound_logextra" class="input" value="1" >Yes
 						<input type="radio" name="unbound_logextra" class="input" value="0" >No
@@ -349,7 +376,7 @@ function applySettings(){
                 </td>
         </tr>
         <tr>
-                <th>Send Stats to Log Hourly</th>
+                <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(10);">Send Stats to Log Hourly</a></th>
                 <td>
                         <input type="radio" name="unbound_statslog" class="input" value="1" >Yes
 						<input type="radio" name="unbound_statslog" class="input" value="0" >No
@@ -362,21 +389,21 @@ function applySettings(){
 			</tr>
 		</thead>
         <tr>
-                <th>Extended Statistics</th>
+                <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(11);">Extended Statistics</a></th>
                 <td>
                         <input type="radio" name="unbound_extended_stats" class="input" value="1" >Yes
 						<input type="radio" name="unbound_extended_stats" class="input" value="0" >No
                 </td>
         </tr>
         <tr>
-                <th>EDNS Buffer Size</th>
+                <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(12);">EDNS Buffer Size</a></th>
                 <td>
                         <input type="text" maxlength="5" class="input_6_table" id="unbound_edns_size" onKeyPress="return validator.isNumber(this,event);" value="0">&nbsp;bytes
 						<span>Default: 4096</span>
                 </td>
         </tr>
         <tr>
-                <th>Cache Sizing</th>
+                <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(13);">Cache Sizing</a></th>
                 <td>
                         <select name="unbound_resource" class="input_option">
 						<option value="default">Default</option>
@@ -386,7 +413,7 @@ function applySettings(){
 						<option value="large">Large</option>
                 </td>
         </tr>
-                <th>Recursion Style</th>
+                <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(14);">Recursion Style</a></th>
                 <td>
                         <select name="unbound_recursion" class="input_option">
 						<option value="default">Default</option>
@@ -395,7 +422,7 @@ function applySettings(){
                 </td>
         </tr>
         <tr>
-                <th>Minimum TTL</th>
+                <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(15);">Minimum TTL</a></th>
                 <td>
                         <input type="text" maxlength="4" class="input_6_table" id="unbound_ttl_min" onKeyPress="return validator.isNumber(this,event);" value="0">&nbsp;seconds
 						<span>Default: 0 Max: 1800</span>
@@ -407,14 +434,14 @@ function applySettings(){
 			</tr>
 		</thead>
         <tr>
-                <th>QNAME Minimization</th>
+                <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(16);">QNAME Minimization</a></th>
                 <td>
                         <input type="radio" name="unbound_query_minimize" class="input" value="1" >Yes
 						<input type="radio" name="unbound_query_minimize" class="input" value="0" >No
                 </td>
         </tr>
         <tr>
-                <th>Strict QNAME Minimization</th>
+                <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(17);">Strict QNAME Minimization</a></th>
                 <td>
                         <input type="radio" name="unbound_query_min_strict" class="input" value="1" >Yes
 						<input type="radio" name="unbound_query_min_strict" class="input" value="0" >No
@@ -426,21 +453,21 @@ function applySettings(){
 			</tr>
 		</thead>
         <tr>
-                <th>DNS Rebind Protection</th>
+                <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(18);">DNS Rebind Protection</a></th>
                 <td>
                         <input type="radio" name="unbound_rebind_protection" class="input" onclick="hide_dnsrebind(this.value);" value="1" >Yes
 						<input type="radio" name="unbound_rebind_protection" class="input" onclick="hide_dnsrebind(this.value);" value="0" >No
                 </td>
         </tr>
         <tr id="dnsreblocal_tr">
-                <th>Block localhost responses</th>
+                <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(19);">Block localhost responses</a></th>
                 <td>
                         <input type="radio" name="unbound_rebind_localhost" class="input" value="1" >Yes
 						<input type="radio" name="unbound_rebind_localhost" class="input" value="0" >No
                 </td>
         </tr>
         <tr id="dnsrebdom_tr">
-                <th>Whitelisted rebind domains</th>
+                <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(20);">Whitelisted rebind domains</a></th>
                 <td>
                         <textarea rows="1" class="textarea_ssh_table" id="unbound_domain_rebindok" spellcheck="false" name="unbound_domain_rebindok" cols="50" maxlength="2249"></textarea>
                 </td>
@@ -451,19 +478,25 @@ function applySettings(){
 			</tr>
 		</thead>
         <tr>
-                <th>Enable DNS64</th>
+                <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(21);">Enable DNS64</a></th>
                 <td>
                         <input type="radio" name="unbound_dns64" class="input" onclick="hide_dns64(this.value);" value="1" >Yes
 						<input type="radio" name="unbound_dns64" class="input" onclick="hide_dns64(this.value);" value="0" >No
                 </td>
         </tr>
         <tr id="dns64pre_tr">
-                <th>DNS64 Prefix</th>
+                <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(22);">DNS64 Prefix</a></th>
                 <td>
                         <input type="text" maxlength="20" class="input_20_table" id="unbound_dns64_prefix" value="">
                 </td>
         </tr>
         <tr>
+        <tr>
+                <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(23);">Custom server configuration</a></th>
+                <td>
+                        <textarea rows="5" class="textarea_ssh_table" id="unbound_custom_server" spellcheck="false" name="unbound_custom_server" cols="50" maxlength="2249"></textarea>
+                </td>
+        </tr>
 </table>
 <div class="apply_gen">
         <input name="button" type="button" class="button_gen" onclick="applySettings();" value="Apply"/>

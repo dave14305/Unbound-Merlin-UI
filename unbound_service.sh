@@ -631,6 +631,7 @@ unbound_uci() {
 #  UB_B_LOCL_SERV=$(am_settings_get unbound_localservice); [ -z "$UB_B_LOCL_SERV" ] && UB_B_LOCL_SERV=1
   UB_LIST_INSECURE="$(am_settings_get unbound_domain_insecure)"
   UB_LIST_PRIVATE="$(am_settings_get unbound_domain_rebindok)"
+  UB_CUSTOM_SERVER_CONFIG="$(am_settings_get unbound_custom_server)"
   UB_B_NTP_BOOT=$(am_settings_get unbound_validator_ntp); [ -z "$UB_B_NTP_BOOT" ] && UB_B_NTP_BOOT=1
   UB_B_STATSLOG=$(am_settings_get unbound_statslog); [ -z "$UB_B_STATSLOG" ] && UB_B_STATSLOG=0
 
@@ -664,6 +665,11 @@ unbound_include() {
     rm  "$UB_CORE_CONF"
   fi
 
+  if [ -n "$UB_CUSTOM_SERVER_CONFIG" ]; then
+    echo "# Begin Server custom config from WebUI" >> $UB_TOTAL_CONF
+    echo $UB_CUSTOM_SERVER_CONFIG | /opt/bin/base64 -d >> $UB_TOTAL_CONF
+    echo "# End Server custom config from WebUI" >> $UB_TOTAL_CONF
+  fi
 
   if [ -f "$UB_SRV_CONF" ] ; then
     {
