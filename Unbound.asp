@@ -41,8 +41,6 @@ function YazHint(hintid) {
 	if(hintid == 8) hinttext="The verbosity number, level 0 means no verbosity, only errors. Level 1 gives operational information. Level 2 gives detailed operational information. Level 3 gives query level information, output per query. Level 4 gives algorithm level information. Level 5 logs client identification for cache misses.";
 	if(hintid == 9) hinttext="Enable extra log details for queries and SERVFAIL messages.";
 	if(hintid == 10) hinttext="Write hourly statistics to the chosen log destination.";
-	if(hintid == 11) hinttext="Should LAN be able to initiate connections to Guest Network clients (but not the opposite)? Cannot be enabled if _TWOWAYTOGUEST is enabled";
-	if(hintid == 12) hinttext="Should Guest Network radio prevent clients from talking to each other?";
 	return overlib(hinttext, HAUTO, VAUTO);
 }
 
@@ -104,18 +102,6 @@ function initial(){
         else
                 document.form.unbound_resource.value = custom_settings.unbound_resource;
 
-        if (custom_settings.unbound_dns64 == undefined)
-                document.form.unbound_dns64.value = "0";
-        else
-                document.form.unbound_dns64.value = custom_settings.unbound_dns64;
-
-        hide_dns64(getRadioValue(document.form.unbound_dns64));
-
-        if (custom_settings.unbound_dns64_prefix == undefined)
-                document.getElementById('unbound_dns64_prefix').value = "64:ff9b::/96";
-        else
-                document.getElementById('unbound_dns64_prefix').value = custom_settings.unbound_dns64_prefix;
-
         if (custom_settings.unbound_recursion == undefined)
                 document.form.unbound_recursion.value = "default";
         else
@@ -156,11 +142,6 @@ function initial(){
         else
                 document.getElementById('unbound_domain_rebindok').value = Base64.decode(custom_settings.unbound_domain_rebindok);
 
-        if (custom_settings.unbound_validator_ntp == undefined)
-                document.form.unbound_validator_ntp.value = "0";
-        else
-                document.form.unbound_validator_ntp.value = custom_settings.unbound_validator_ntp;
-
         if (custom_settings.unbound_statslog == undefined)
                 document.form.unbound_statslog.value = "0";
         else
@@ -171,16 +152,17 @@ function initial(){
         else
                 document.getElementById('unbound_custom_server').value = Base64.decode(custom_settings.unbound_custom_server);
 
+				if (custom_settings.unbound_custom_extend == undefined)
+                document.getElementById('unbound_custom_extend').value ="";
+        else
+                document.getElementById('unbound_custom_extend').value = Base64.decode(custom_settings.unbound_custom_extend);
+
 		hide_dnsrebind(getRadioValue(document.form.unbound_rebind_protection));
 		hide_dnssec(getRadioValue(document.form.unbound_validator));
 }
 
-function hide_dns64(_value){
-        showhide("dns64pre_tr", (_value == "1"));
-}
 function hide_dnssec(_value){
         showhide("dnssecdom_tr", (_value == "1"));
-        showhide("dnssecboot_tr", (_value == "1"));
 }
 function hide_dnsrebind(_value){
         showhide("dnsrebdom_tr", (_value == "1"));
@@ -209,8 +191,6 @@ function applySettings(){
         custom_settings.unbound_edns_size = document.getElementById('unbound_edns_size').value;
         custom_settings.unbound_listen_port = document.getElementById('unbound_listen_port').value;
         custom_settings.unbound_resource = document.form.unbound_resource.value;
-        custom_settings.unbound_dns64 = document.form.unbound_dns64.value;
-        custom_settings.unbound_dns64_prefix = document.getElementById('unbound_dns64_prefix').value;
         custom_settings.unbound_recursion = document.form.unbound_recursion.value;
         custom_settings.unbound_query_minimize = document.form.unbound_query_minimize.value;
         custom_settings.unbound_query_min_strict = document.form.unbound_query_min_strict.value;
@@ -220,7 +200,7 @@ function applySettings(){
         custom_settings.unbound_domain_rebindok = Base64.encode(document.getElementById('unbound_domain_rebindok').value);
         custom_settings.unbound_domain_insecure = Base64.encode(document.getElementById('unbound_domain_insecure').value);
         custom_settings.unbound_custom_server = Base64.encode(document.getElementById('unbound_custom_server').value);
-        custom_settings.unbound_validator_ntp = document.form.unbound_validator_ntp.value;
+        custom_settings.unbound_custom_server = Base64.encode(document.getElementById('unbound_custom_extend').value);
         custom_settings.unbound_statslog = document.form.unbound_statslog.value;
 
         /* Store object as a string in the amng_custom hidden input field */
@@ -246,7 +226,6 @@ function applySettings(){
 <input type="hidden" name="action_mode" value="apply">
 <input type="hidden" name="action_wait" value="5">
 <input type="hidden" name="first_time" value="">
-<input type="hidden" name="action_script" value="">
 <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get("preferred_lang"); %>">
 <input type="hidden" name="firmver" value="<% nvram_get("firmver"); %>">
 <input type="hidden" name="amng_custom" id="amng_custom" value="">
@@ -329,13 +308,6 @@ function applySettings(){
                 <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(5);">Ignore DNSSEC Domains</a></th>
                 <td>
                         <textarea rows="1" class="textarea_ssh_table" id="unbound_domain_insecure" spellcheck="false" name="unbound_domain_insecure" cols="50" maxlength="2249"></textarea>
-                </td>
-        </tr>
-        <tr id="dnssecboot_tr">
-                <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(6);">Disable DNSSEC before NTP sync</a></th>
-                <td>
-                        <input type="radio" name="unbound_validator_ntp" class="input" value="1" >Yes
-						<input type="radio" name="unbound_validator_ntp" class="input" value="0" >No
                 </td>
         </tr>
 		<thead>
@@ -474,27 +446,19 @@ function applySettings(){
         </tr>
 		<thead>
 			<tr>
-				<td colspan="2">Other Configuration</td>
+				<td colspan="2">Custom Configuration</td>
 			</tr>
 		</thead>
         <tr>
-                <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(21);">Enable DNS64</a></th>
-                <td>
-                        <input type="radio" name="unbound_dns64" class="input" onclick="hide_dns64(this.value);" value="1" >Yes
-						<input type="radio" name="unbound_dns64" class="input" onclick="hide_dns64(this.value);" value="0" >No
-                </td>
-        </tr>
-        <tr id="dns64pre_tr">
-                <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(22);">DNS64 Prefix</a></th>
-                <td>
-                        <input type="text" maxlength="20" class="input_20_table" id="unbound_dns64_prefix" value="">
-                </td>
-        </tr>
-        <tr>
-        <tr>
-                <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(23);">Custom server configuration</a></th>
+                <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(23);">Custom server: configuration</a></th>
                 <td>
                         <textarea rows="5" class="textarea_ssh_table" id="unbound_custom_server" spellcheck="false" name="unbound_custom_server" cols="50" maxlength="2249"></textarea>
+                </td>
+        </tr>
+				<tr>
+                <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(24);">Custom extended configuration</a></th>
+                <td>
+                        <textarea rows="5" class="textarea_ssh_table" id="unbound_custom_extend" spellcheck="false" name="unbound_custom_extend" cols="50" maxlength="2249"></textarea>
                 </td>
         </tr>
 </table>

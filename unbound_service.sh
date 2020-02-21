@@ -26,6 +26,7 @@
 # Adapted for ASUSWRT-Merlin from OpenWRT unbound.sh
 
 # where are we?
+UB_BINDIR=/opt/sbin
 UB_LIBDIR=/opt/var/lib/unbound
 UB_VARDIR=/opt/var/lib/unbound
 UB_PIDFILE=$UB_VARDIR/unbound.pid
@@ -35,7 +36,6 @@ UB_TOTAL_CONF=$UB_VARDIR/unbound.conf
 UB_CORE_CONF=$UB_VARDIR/server.conf.tmp
 UB_CTRL_CONF=$UB_VARDIR/ctrl.conf.tmp
 UB_SRV_CONF=$UB_VARDIR/unbound_srv.conf
-UB_ZONE_CONF=$UB_VARDIR/zone.conf.tmp
 UB_EXT_CONF=$UB_VARDIR/unbound_ext.conf
 
 # TLS keys
@@ -53,9 +53,10 @@ UB_SRVKEY_FILE=$UB_VARDIR/unbound_server.key
 UB_SRVPEM_FILE=$UB_VARDIR/unbound_server.pem
 
 # helper apps
-UB_ANCHOR=/opt/sbin/unbound-anchor
-UB_CONTROL=/opt/sbin/unbound-control
+UB_ANCHOR=$UB_BINDIR/unbound-anchor
+UB_CONTROL=$UB_BINDIR/unbound-control
 UB_CONTROL_CFG="$UB_CONTROL -c $UB_TOTAL_CONF"
+UB_CHECKCONF=$UB_BINDIR/unbound-checkconf
 
 # reset as a combo with UB_B_NTP_BOOT and some time stamp files
 UB_B_READY=1
@@ -66,12 +67,6 @@ UB_LIST_INSECURE=""
 ##############################################################################
 
 . /usr/sbin/helper.sh  # Merlin Add-on helpers
-
-##############################################################################
-
-bundle_domain_insecure() {
-  UB_LIST_INSECURE="$UB_LIST_INSECURE $1"
-}
 
 ##############################################################################
 
@@ -353,7 +348,6 @@ unbound_conf() {
 
     mixed)
       {
-        # Interface Wildcard (access contol handled by "option local_service")
         echo "  edns-buffer-size: $UB_N_EDNS_SIZE"
         echo "  port: $UB_N_RX_PORT"
         echo "  outgoing-port-permit: 10240-65535"
@@ -385,7 +379,6 @@ unbound_conf() {
       ;;
   esac
 
-
   case "$UB_D_RESOURCE" in
     # Tiny - Unbound's recommended cheap hardware config
     tiny)   rt_mem=1  ; rt_conn=2  ; rt_buff=1 ;;
@@ -398,7 +391,6 @@ unbound_conf() {
     # Whatever unbound does
     *) rt_mem=0 ; rt_conn=0 ;;
   esac
-
 
   if [ "$rt_mem" -gt 0 ] ; then
     {
@@ -426,10 +418,8 @@ unbound_conf() {
     logger -t unbound -s "default memory configuration"
   fi
 
-
   # Assembly of module-config: options is tricky; order matters
   modulestring="iterator"
-
 
   if [ "$UB_B_DNSSEC" -gt 0 ] ; then
     if [ "$UB_B_NTP_BOOT" -gt 0 ] ; then
@@ -437,31 +427,20 @@ unbound_conf() {
       echo "  val-override-date: -1" >> "$UB_CORE_CONF"
     fi
 
-
     {
       echo "  harden-dnssec-stripped: yes"
       echo "  val-clean-additional: yes"
       echo "  ignore-cd-flag: yes"
     } >> "$UB_CORE_CONF"
 
-
     modulestring="validator $modulestring"
   fi
-
-
-  if [ "$UB_B_DNS64" -gt 0 ] ; then
-    echo "  dns64-prefix: $UB_IP_DNS64" >> "$UB_CORE_CONF"
-
-    modulestring="dns64 $modulestring"
-  fi
-
 
   {
     # Print final module string
     echo "  module-config: \"$modulestring\""
     echo
   }  >> "$UB_CORE_CONF"
-
 
   case "$UB_D_RECURSION" in
     passive)
@@ -614,13 +593,11 @@ unbound_uci() {
   UB_D_LOGDEST=$(am_settings_get unbound_logdest); [ -z "$UB_D_LOGDEST" ] && UB_D_LOGDEST=syslog
   UB_D_LOGEXTRA=$(am_settings_get unbound_logextra); [ -z "$UB_D_LOGEXTRA" ] && UB_D_LOGEXTRA=0
   UB_D_VERBOSE=$(am_settings_get unbound_verbosity); [ -z "$UB_D_VERBOSE" ] && UB_D_VERBOSE=1
-  UB_B_EXT_STATS=$(am_settings_get unbound_extended_stats); [ -z "$UB_B_EXT_STATS" ] && UB_B_EXT_STATS=1
+  UB_B_EXT_STATS=$(am_settings_get unbound_extended_stats); [ -z "$UB_B_EXT_STATS" ] && UB_B_EXT_STATS=0
   UB_D_PROTOCOL=$(am_settings_get unbound_protocol); [ -z "$UB_D_PROTOCOL" ] && UB_D_PROTOCOL=ip4_only
   UB_N_EDNS_SIZE=$(am_settings_get unbound_edns_size); [ -z "$UB_N_EDNS_SIZE" ] && UB_N_EDNS_SIZE=1280
   UB_N_RX_PORT=$(am_settings_get unbound_listen_port); [ -z "$UB_N_RX_PORT" ] && UB_N_RX_PORT=53535
   UB_D_RESOURCE=$(am_settings_get unbound_resource); [ -z "$UB_D_RESOURCE" ] && UB_D_RESOURCE=default
-  UB_B_DNS64=$(am_settings_get unbound_dns64); [ -z "$UB_B_DNS64" ] && UB_B_DNS64=0
-  UB_IP_DNS64=$(am_settings_get unbound_dns64_prefix); [ -z "$UB_IP_DNS64" ] && UB_IP_DNS64=64:ff9b::/96
   UB_D_RECURSION=$(am_settings_get unbound_recursion); [ -z "$UB_D_RECURSION" ] && UB_D_RECURSION=passive
   UB_B_QUERY_MIN=$(am_settings_get unbound_query_minimize); [ -z "$UB_B_QUERY_MIN" ] && UB_B_QUERY_MIN=1
   UB_B_QRY_MINST=$(am_settings_get unbound_query_min_strict); [ -z "$UB_B_QRY_MINST" ] && UB_B_QRY_MINST=0
@@ -628,11 +605,10 @@ unbound_uci() {
   UB_TTL_MIN=$(am_settings_get unbound_ttl_min); [ -z "$UB_TTL_MIN" ] && UB_TTL_MIN=120
   UB_D_PRIV_BLCK=$(am_settings_get unbound_rebind_protection); [ -z "$UB_D_PRIV_BLCK" ] && UB_D_PRIV_BLCK=1
   UB_B_LOCL_BLCK=$(am_settings_get unbound_rebind_localhost); [ -z "$UB_B_LOCL_BLCK" ] && UB_B_LOCL_BLCK=1
-#  UB_B_LOCL_SERV=$(am_settings_get unbound_localservice); [ -z "$UB_B_LOCL_SERV" ] && UB_B_LOCL_SERV=1
   UB_LIST_INSECURE="$(am_settings_get unbound_domain_insecure)"
   UB_LIST_PRIVATE="$(am_settings_get unbound_domain_rebindok)"
   UB_CUSTOM_SERVER_CONFIG="$(am_settings_get unbound_custom_server)"
-  UB_B_NTP_BOOT=$(am_settings_get unbound_validator_ntp); [ -z "$UB_B_NTP_BOOT" ] && UB_B_NTP_BOOT=1
+  UB_CUSTOM_EXTEND_CONFIG="$(am_settings_get unbound_custom_extend)"
   UB_B_STATSLOG=$(am_settings_get unbound_statslog); [ -z "$UB_B_STATSLOG" ] && UB_B_STATSLOG=0
 
   if [ "$UB_N_EDNS_SIZE" -lt 512 ] || [ 4096 -lt "$UB_N_EDNS_SIZE" ] ; then
@@ -666,9 +642,12 @@ unbound_include() {
   fi
 
   if [ -n "$UB_CUSTOM_SERVER_CONFIG" ]; then
-    echo "# Begin Server custom config from WebUI" >> $UB_TOTAL_CONF
-    echo $UB_CUSTOM_SERVER_CONFIG | /opt/bin/base64 -d >> $UB_TOTAL_CONF
-    echo "# End Server custom config from WebUI" >> $UB_TOTAL_CONF
+    {
+      echo "# Begin Server custom config from WebUI"
+      echo "$UB_CUSTOM_SERVER_CONFIG" | /opt/bin/base64 -d
+      echo
+      echo "# End Server custom config from WebUI"
+    } >> $UB_TOTAL_CONF
   fi
 
   if [ -f "$UB_SRV_CONF" ] ; then
@@ -679,20 +658,20 @@ unbound_include() {
     }>> "$UB_TOTAL_CONF"
   fi
 
-
-  if [ -f "$UB_ZONE_CONF" ] ; then
-    # UCI defined forward, stub, and auth zones
-    cat "$UB_ZONE_CONF" >> "$UB_TOTAL_CONF"
-    rm  "$UB_ZONE_CONF"
-  fi
-
-
   if [ -f "$UB_CTRL_CONF" ] ; then
     # UCI defined control application connection
     cat "$UB_CTRL_CONF" >> "$UB_TOTAL_CONF"
     rm  "$UB_CTRL_CONF"
   fi
 
+  if [ -n "$UB_CUSTOM_EXTEND_CONFIG" ]; then
+    {
+      echo "# Begin Extended custom config from WebUI"
+      echo "$UB_CUSTOM_EXTEND_CONFIG" | /opt/bin/base64 -d
+      echo
+      echo "# End Extended custom config from WebUI"
+    } >> $UB_TOTAL_CONF
+  fi
 
   if [ -f "$UB_EXT_CONF" ] ; then
     {
@@ -706,7 +685,9 @@ unbound_include() {
 ##############################################################################
 # Main
   logger -t unbound "Configuring Unbound..."
+  # get configuration options from Merlin API
   unbound_uci
+  # create necessary directories and files
   unbound_mkdir
   # server:
   unbound_conf
@@ -714,6 +695,7 @@ unbound_include() {
   unbound_control
   # merge
   unbound_include
-  logger -t unbound "Unbound Configuration complete."
+  # check final configuration file for errors, log results in syslog
+  $UB_CHECKCONF "$UB_TOTAL_CONF" 2>&1 | logger -t unbound
 
-##############################################################################
+  logger -t unbound "Unbound Configuration complete."
