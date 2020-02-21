@@ -284,7 +284,6 @@ unbound_conf() {
     if [ "$UB_D_LOGEXTRA" == "1" ] ; then
 		echo "  log-tag-queryreply: yes"
 		echo "  log-servfail: yes"
-		echo "  log-local-actions: yes"
     fi
     if [ "$UB_B_STATSLOG" == "1" ] ; then
 		echo "  statistics-interval: 3600"

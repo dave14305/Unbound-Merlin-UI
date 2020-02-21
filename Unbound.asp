@@ -356,15 +356,15 @@ function applySettings(){
                 <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(9);">Enhanced Logging</a></th>
                 <td>
                         <input type="radio" name="unbound_logextra" class="input" value="1" >Yes
-						<input type="radio" name="unbound_logextra" class="input" value="0" >No
-						<span>Query tags, SERVFAIL, local actions</span>
+												<input type="radio" name="unbound_logextra" class="input" value="0" >No
+												<span>Default: No</span>
                 </td>
         </tr>
         <tr>
                 <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(10);">Send Stats to Log Hourly</a></th>
                 <td>
                         <input type="radio" name="unbound_statslog" class="input" value="1" >Yes
-						<input type="radio" name="unbound_statslog" class="input" value="0" >No
+												<input type="radio" name="unbound_statslog" class="input" value="0" >No
                 </td>
         </tr>
         <tr>
