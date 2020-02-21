@@ -52,7 +52,13 @@ function SetCurrentPage(){
 function initial(){
         show_menu();
 				SetCurrentPage();
-				
+				unbound_state = (<% sysinfo("pid.unbound"); %> > 0 ? 1 : 0);
+
+				if (unbound_state > 0)
+						document.getElementById("unbound_status").innerHTML = "Status: Running";
+					else
+						document.getElementById("unbound_status").innerHTML = "Status: Stopped";
+
         if (custom_settings.unbound_enable == undefined)
                 document.form.unbound_enable.value = "0";
         else
@@ -268,6 +274,7 @@ function applySettings(){
                 <td>
                         <input type="radio" name="unbound_enable" class="input" value="1" >Yes
 						<input type="radio" name="unbound_enable" class="input" value="0" >No
+						<span id="unbound_status"></span>
 				</td>
         </tr>
         <tr>
