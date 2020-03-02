@@ -537,7 +537,7 @@ unbound_uci() {
   UB_B_QRY_MINST=$(am_settings_get unbound_query_min_strict); [ -z "$UB_B_QRY_MINST" ] && UB_B_QRY_MINST=0
   UB_B_HIDE_BIND=$(am_settings_get unbound_hide_binddata); [ -z "$UB_B_HIDE_BIND" ] && UB_B_HIDE_BIND=1
   UB_TTL_MIN=$(am_settings_get unbound_ttl_min); [ -z "$UB_TTL_MIN" ] && UB_TTL_MIN=120
-  UB_D_PRIV_BLCK=$(am_settings_get unbound_rebind_protection); [ -z "$UB_D_PRIV_BLCK" ] && UB_D_PRIV_BLCK=$(nvram get dns_rebind_protect) # check nvram var name
+  UB_D_PRIV_BLCK=$(am_settings_get unbound_rebind_protection); [ -z "$UB_D_PRIV_BLCK" ] && UB_D_PRIV_BLCK=$(nvram get dns_norebind)
   UB_B_LOCL_BLCK=$(am_settings_get unbound_rebind_localhost); [ -z "$UB_B_LOCL_BLCK" ] && UB_B_LOCL_BLCK=1
   UB_LIST_INSECURE="$(am_settings_get unbound_domain_insecure)"
   UB_LIST_PRIVATE="$(am_settings_get unbound_domain_rebindok)"
