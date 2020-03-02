@@ -25,7 +25,7 @@
 
 # Adapted for ASUSWRT-Merlin from OpenWRT unbound.sh
 
-# where are we?
+# Unbound Directory locations
 UB_BINDIR=/opt/sbin
 UB_LIBDIR=/opt/var/lib/unbound
 UB_VARDIR=/opt/var/lib/unbound
@@ -55,20 +55,12 @@ UB_SRVPEM_FILE=$UB_VARDIR/unbound_server.pem
 # helper apps
 UB_ANCHOR=$UB_BINDIR/unbound-anchor
 UB_CONTROL=$UB_BINDIR/unbound-control
+UB_CONTROL_SETUP=$UB_BINDIR/unbound-control-setup
 UB_CONTROL_CFG="$UB_CONTROL -c $UB_TOTAL_CONF"
 UB_CHECKCONF=$UB_BINDIR/unbound-checkconf
 
-# reset as a combo with UB_B_NTP_BOOT and some time stamp files
-UB_B_READY=1
-
-# keep track of assignments during inserted resource records
-UB_LIST_INSECURE=""
-
-##############################################################################
-
-. /usr/sbin/helper.sh  # Merlin Add-on helpers
-
-##############################################################################
+# Source ASUSWRT-Merlin helper functions
+. /usr/sbin/helper.sh
 
 unbound_mkdir() {
   local filestuff
@@ -85,10 +77,9 @@ unbound_mkdir() {
   fi
 
   # Blind copy /etc/unbound to /var/lib/unbound
-  mkdir -p "$UB_VARDIR"
-  rm -f "$UB_VARDIR"/dhcp_*
+  [ ! -d "$UB_VARDIR" ] && mkdir -p "$UB_VARDIR"
   touch "$UB_TOTAL_CONF"
-  cp -p /opt/etc/unbound/* "$UB_VARDIR"/
+  #cp -p /opt/etc/unbound/* "$UB_VARDIR"/
 
   if [ ! -f "$UB_RHINT_FILE" ] ; then
     curl -o "$UB_RHINT_FILE" https://www.internic.net/domain/named.cache
@@ -120,11 +111,11 @@ unbound_mkdir() {
     chmod 640 "$UB_CTLKEY_FILE" "$UB_CTLPEM_FILE" \
               "$UB_SRVKEY_FILE" "$UB_SRVPEM_FILE"
 
-  elif [ -x /usr/sbin/unbound-control-setup ] ; then
+  elif [ -x $UB_BINDIR/unbound-control-setup ] ; then
     case "$UB_D_CONTROL" in
       [2-3])
         # unbound-control-setup for encrypt opt. 2 and 3, but not 4 "static"
-        /opt/sbin/unbound-control-setup -d "$UB_VARDIR"
+        $UB_BINDIR/unbound-control-setup -d "$UB_VARDIR"
 
         chown -R nobody:nobody    "$UB_CTLKEY_FILE" "$UB_CTLPEM_FILE" \
                                   "$UB_SRVKEY_FILE" "$UB_SRVPEM_FILE"
@@ -132,10 +123,10 @@ unbound_mkdir() {
         chmod 640 "$UB_CTLKEY_FILE" "$UB_CTLPEM_FILE" \
                   "$UB_SRVKEY_FILE" "$UB_SRVPEM_FILE"
 
-        cp -p "$UB_CTLKEY_FILE" /opt/etc/unbound/unbound_control.key
-        cp -p "$UB_CTLPEM_FILE" /opt/etc/unbound/unbound_control.pem
-        cp -p "$UB_SRVKEY_FILE" /opt/etc/unbound/unbound_server.key
-        cp -p "$UB_SRVPEM_FILE" /opt/etc/unbound/unbound_server.pem
+#        cp -p "$UB_CTLKEY_FILE" /opt/etc/unbound/unbound_control.key
+#        cp -p "$UB_CTLPEM_FILE" /opt/etc/unbound/unbound_control.pem
+#        cp -p "$UB_SRVKEY_FILE" /opt/etc/unbound/unbound_server.key
+#        cp -p "$UB_SRVPEM_FILE" /opt/etc/unbound/unbound_server.pem
         ;;
     esac
   fi
@@ -143,12 +134,9 @@ unbound_mkdir() {
 
   if [ "$(nvram get ntp_ready)" -eq "1" ] ; then
     # NTP is done so its like you actually had an RTC
-    UB_B_READY=1
     UB_B_NTP_BOOT=0
-
   else
     # DNSSEC-TIME will not reconcile
-    UB_B_READY=0
     UB_B_NTP_BOOT=1
   fi
 }
@@ -196,11 +184,9 @@ unbound_control() {
       } >> "$UB_CTRL_CONF"
       ;;
 
-    [3-4])
+    3)
       {
         # Network Encrypted Remote Control
-        # (3) may auto setup and (4) must have static key/pem files
-        # TODO: add UCI list for interfaces to bind
         echo "remote-control:"
         echo "  control-enable: yes"
         echo "  control-use-cert: yes"
@@ -221,7 +207,7 @@ unbound_control() {
 ##############################################################################
 
 unbound_conf() {
-  local rt_mem rt_conn rt_buff modulestring domain ifsubnet
+  local rt_mem rt_conn rt_buff modulestring domain
 
   {
     # server: for this whole function
@@ -233,39 +219,33 @@ unbound_conf() {
     echo "  pidfile: $UB_PIDFILE"
   } > "$UB_CORE_CONF"
 
-
   if [ -f "$UB_TLS_FWD_FILE" ] ; then
     # TLS cert bundle for upstream forwarder and https zone files
     # This is loaded before drop to root, so pull from /etc/ssl
     echo "  tls-cert-bundle: $UB_TLS_FWD_FILE" >> "$UB_CORE_CONF"
   fi
 
-
   if [ -f "$UB_RHINT_FILE" ] ; then
     # Optional hints if found
     echo "  root-hints: $UB_RHINT_FILE" >> "$UB_CORE_CONF"
   fi
-
 
   if [ "$UB_B_DNSSEC" -gt 0 ] && [ -f "$UB_RKEY_FILE" ] ; then
     {
       echo "  auto-trust-anchor-file: $UB_RKEY_FILE"
       echo
     } >> "$UB_CORE_CONF"
-
   else
     echo >> "$UB_CORE_CONF"
   fi
 
-
-  if /opt/sbin/unbound -V | grep -q "Linked libs:.*libevent" ; then
+  if $UB_BINDIR/unbound -V | grep -q "Linked libs:.*libevent" ; then
     # heavy variant using "threads" may need substantial resources
     echo "  num-threads: 2" >> "$UB_CORE_CONF"
   else
     # light variant with one "process" is much more efficient with light traffic
     echo "  num-threads: 1" >> "$UB_CORE_CONF"
   fi
-
 
   {
     # Limited threading (2) with one shared slab
@@ -276,28 +256,26 @@ unbound_conf() {
     echo
     # Logging
     if [ "$UB_D_LOGDEST" == "syslog" ] ; then
-		echo "  use-syslog: yes"
-	else
-		echo "  logfile: $UB_VARDIR/unbound.log"
-	fi
+  		echo "  use-syslog: yes"
+  	else
+  		echo "  logfile: $UB_VARDIR/unbound.log"
+  	fi
     echo "  log-time-ascii: yes"
     if [ "$UB_D_LOGEXTRA" == "1" ] ; then
-		echo "  log-tag-queryreply: yes"
-		echo "  log-servfail: yes"
+  		echo "  log-tag-queryreply: yes"
+  		echo "  log-servfail: yes"
     fi
     if [ "$UB_B_STATSLOG" == "1" ] ; then
-		echo "  statistics-interval: 3600"
-	else
-		echo "  statistics-interval: 0"
-	fi
-	echo "  statistics-cumulative: no"
+      echo "  statistics-interval: 3600"
+  	else
+  		echo "  statistics-interval: 0"
+  	fi
+    echo "  statistics-cumulative: no"
   } >> "$UB_CORE_CONF"
-
 
   if [ "$UB_D_VERBOSE" -ge 0 ] && [ "$UB_D_VERBOSE" -le 5 ] ; then
     echo "  verbosity: $UB_D_VERBOSE" >> "$UB_CORE_CONF"
   fi
-
 
   if [ "$UB_B_EXT_STATS" -gt 0 ] ; then
     {
@@ -305,7 +283,6 @@ unbound_conf() {
       echo "  extended-statistics: yes"
       echo
     } >> "$UB_CORE_CONF"
-
   else
     {
       # Log Less
@@ -314,16 +291,17 @@ unbound_conf() {
     } >> "$UB_CORE_CONF"
   fi
 
+# Common protocol settings
+  {
+    echo "  edns-buffer-size: $UB_N_EDNS_SIZE"
+    echo "  port: $UB_N_RX_PORT"
+    echo "  outgoing-port-permit: 10240-65535"
+    echo "  interface: 127.0.0.1@$UB_N_RX_PORT"
+  } >> "$UB_CORE_CONF"
 
   case "$UB_D_PROTOCOL" in
     ip4_only)
       {
-        echo "  edns-buffer-size: $UB_N_EDNS_SIZE"
-        echo "  port: $UB_N_RX_PORT"
-        echo "  outgoing-port-permit: 10240-65535"
-        echo "  interface: 127.0.0.1"
-        echo "  outgoing-interface: 0.0.0.0"
-        echo "  do-ip4: yes"
         echo "  do-ip6: no"
         echo
       } >> "$UB_CORE_CONF"
@@ -331,14 +309,8 @@ unbound_conf() {
 
     ip6_prefer)
       {
-        echo "  edns-buffer-size: $UB_N_EDNS_SIZE"
-        echo "  port: $UB_N_RX_PORT"
-        echo "  outgoing-port-permit: 10240-65535"
-        echo "  interface: 127.0.0.1"
-        echo "  interface: ::1"
         echo "  outgoing-interface: 0.0.0.0"
         echo "  outgoing-interface: ::0"
-        echo "  do-ip4: yes"
         echo "  do-ip6: yes"
         echo "  prefer-ip6: yes"
         echo
@@ -347,32 +319,9 @@ unbound_conf() {
 
     mixed)
       {
-        echo "  edns-buffer-size: $UB_N_EDNS_SIZE"
-        echo "  port: $UB_N_RX_PORT"
-        echo "  outgoing-port-permit: 10240-65535"
-        echo "  interface: 127.0.0.1"
-        echo "  interface: ::1"
         echo "  outgoing-interface: 0.0.0.0"
         echo "  outgoing-interface: ::0"
-        echo "  do-ip4: yes"
         echo "  do-ip6: yes"
-        echo
-      } >> "$UB_CORE_CONF"
-      ;;
-
-    *)
-      if [ "$UB_B_READY" -eq 0 ] ; then
-        logger -t unbound -s "default protocol configuration"
-      fi
-
-
-      {
-        # outgoing-interface has useful defaults; incoming is localhost though
-        echo "  edns-buffer-size: $UB_N_EDNS_SIZE"
-        echo "  port: $UB_N_RX_PORT"
-        echo "  outgoing-port-permit: 10240-65535"
-        echo "  interface: 0.0.0.0"
-        echo "  interface: ::0"
         echo
       } >> "$UB_CORE_CONF"
       ;;
@@ -397,7 +346,6 @@ unbound_conf() {
       echo "  harden-short-bufsize: yes"
       echo "  harden-large-queries: yes"
       echo "  harden-glue: yes"
-      echo "  use-caps-for-id: no"
       echo
       # Set memory sizing parameters
       echo "  msg-buffer-size: $((rt_buff*8192))"
@@ -412,9 +360,6 @@ unbound_conf() {
       echo "  infra-cache-numhosts: $((rt_mem*256))"
       echo
     } >> "$UB_CORE_CONF"
-
-  elif [ "$UB_B_READY" -eq 0 ] ; then
-    logger -t unbound -s "default memory configuration"
   fi
 
   # Assembly of module-config: options is tricky; order matters
@@ -488,13 +433,7 @@ unbound_conf() {
       } >> "$UB_CORE_CONF"
       ;;
 
-    *)
-      if [ "$UB_B_READY" -eq 0 ] ; then
-        logger -t unbound -s "default recursion configuration"
-      fi
-      ;;
   esac
-
 
   {
     # Reload records more than 20 hours old
@@ -507,14 +446,12 @@ unbound_conf() {
     echo
   } >> "$UB_CORE_CONF"
 
-
   {
     # Block server id and version DNS TXT records
     echo "  hide-identity: yes"
     echo "  hide-version: yes"
     echo
   } >> "$UB_CORE_CONF"
-
 
   if [ "$UB_D_PRIV_BLCK" -gt 0 ] ; then
     {
@@ -532,7 +469,6 @@ unbound_conf() {
     } >> "$UB_CORE_CONF"
   fi
 
-
   if [ "$UB_B_LOCL_BLCK" -gt 0 ] ; then
     {
       # Remove DNS reponses from upstream with loopback IP
@@ -542,7 +478,6 @@ unbound_conf() {
       echo
     } >> "$UB_CORE_CONF"
   fi
-
 
   if  [ -n "$UB_LIST_INSECURE" ] ; then
     {
@@ -602,7 +537,7 @@ unbound_uci() {
   UB_B_QRY_MINST=$(am_settings_get unbound_query_min_strict); [ -z "$UB_B_QRY_MINST" ] && UB_B_QRY_MINST=0
   UB_B_HIDE_BIND=$(am_settings_get unbound_hide_binddata); [ -z "$UB_B_HIDE_BIND" ] && UB_B_HIDE_BIND=1
   UB_TTL_MIN=$(am_settings_get unbound_ttl_min); [ -z "$UB_TTL_MIN" ] && UB_TTL_MIN=120
-  UB_D_PRIV_BLCK=$(am_settings_get unbound_rebind_protection); [ -z "$UB_D_PRIV_BLCK" ] && UB_D_PRIV_BLCK=1
+  UB_D_PRIV_BLCK=$(am_settings_get unbound_rebind_protection); [ -z "$UB_D_PRIV_BLCK" ] && UB_D_PRIV_BLCK=$(nvram get dns_rebind_protect) # check nvram var name
   UB_B_LOCL_BLCK=$(am_settings_get unbound_rebind_localhost); [ -z "$UB_B_LOCL_BLCK" ] && UB_B_LOCL_BLCK=1
   UB_LIST_INSECURE="$(am_settings_get unbound_domain_insecure)"
   UB_LIST_PRIVATE="$(am_settings_get unbound_domain_rebindok)"
@@ -681,8 +616,7 @@ unbound_include() {
   fi
 }
 
-##############################################################################
-# Main
+generate_conf() {
   logger -t unbound "Configuring Unbound..."
   # get configuration options from Merlin API
   unbound_uci
@@ -696,5 +630,41 @@ unbound_include() {
   unbound_include
   # check final configuration file for errors, log results in syslog
   $UB_CHECKCONF "$UB_TOTAL_CONF" 2>&1 | logger -t unbound
-
+  # is the config valid? Need to handle errors; save previous config?
   logger -t unbound "Unbound Configuration complete."
+}
+
+# main
+if [ -n "$@" ]; then
+  # Count args
+  # Case arg
+     # generate_conf
+     # update dnsmasq $2 = /etc/dnsmasq.conf
+     # startunbound
+     # restartunbound
+     # reloadunbound
+     # checkstatus
+  case "$1" in
+    generateconf)
+      generate_conf
+      ;;
+    updatednsmasq)
+      update_dnsmasqconf
+      ;;
+    restartunbound)
+      restart_unbound
+      ;;
+    reloadunbound)
+      reload_unbound
+      ;;
+    checkstatus)
+      check_status
+      ;;
+    *)
+      logger -t unbound "Unrecognized service handler $@"
+      ;;
+  esac
+else
+  echo "ERROR: Unbound called without required action parameter."
+  exit 1
+fi
