@@ -635,30 +635,12 @@ generate_conf() {
 }
 
 # main
-if [ -n "$@" ]; then
-  # Count args
-  # Case arg
-     # generate_conf
-     # update dnsmasq $2 = /etc/dnsmasq.conf
-     # startunbound
-     # restartunbound
-     # reloadunbound
-     # checkstatus
+if [ "$#" -ge "1" ]; then
   case "$1" in
-    generateconf)
+    restart)
       generate_conf
-      ;;
-    updatednsmasq)
-      update_dnsmasqconf
-      ;;
-    restartunbound)
-      restart_unbound
-      ;;
-    reloadunbound)
-      reload_unbound
-      ;;
-    checkstatus)
-      check_status
+      $UB_CONTROL reload
+      service restart_dnsmasq
       ;;
     *)
       logger -t unbound "Unrecognized service handler $@"
