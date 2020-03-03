@@ -6,10 +6,10 @@ install_unbound() {
   echo "Installing Unbound from Entware..."
   if [ -f /opt/bin/opkg ]; then
     opkg update
-    opkg install unbound-daemon unbound-anchor unbound-checkconf unbound-control coreutils-base64 || exit 1
+    opkg install unbound-daemon unbound-anchor unbound-checkconf unbound-control coreutils-base64 || return 1
   else
     echo "Entware not installed. Please install via AMTM."
-    exit 1
+    return 1
 }
 
 if [ ! -f /opt/sbin/unbound ]; then
