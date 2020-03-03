@@ -44,6 +44,14 @@ function YazHint(hintid) {
 	if(hintid == 11) hinttext="Enable more detailed statistics collection, viewable in unbound-control stats.";
 	if(hintid == 12) hinttext="Number of bytes size to advertise as the EDNS reassembly buffer size. This is the value put into datagrams over UDP towards peers. Default is 4096 which is RFC recommended. If you have fragmentation reassembly problems, usually seen as timeouts, then a value of 1472 can fix it.";
 	if(hintid == 13) hinttext="Size various performance-related resources (e.g. cache sizes, TCP buffers).";
+	if(hintid == 14) hinttext="Unbound has many options for recursion: passive - slower until cache fills but kind on CPU load. default - Unbound built-in defaults. aggressive - uses prefetching to handle more requests quickly.";
+	if(hintid == 15) hinttext="Time to live minimum for RRsets and messages in the cache. If the minimum kicks in, the data is cached for longer than the domain owner intended, and thus fewer queries are made to lookup the data. Zero makes sure the data in the cache is as the domain owner intended. Higher values, especially more than an hour or so, can lead to trouble as the data in the cache does not match up with the actual data any more.";
+	if(hintid == 16) hinttext="Send minimum amount of information to upstream servers to enhance privacy.";
+	if(hintid == 17) hinttext="QNAME minimisation in strict mode. Do not fall-back to sending full QNAME to potentially broken nameservers. A lot of domains will not be resolvable when this option in enabled. Only use if you know what you are doing. This option only has effect when qname-minimisation is enabled.";
+	if(hintid == 19) hinttext="Allow these domains, and all their subdomains to contain private addresses. Give multiple times to allow multiple domain names to contain private addresses.";
+	if(hintid == 20) hinttext="QNAME minimisation in strict mode. Do not fall-back to sending full QNAME to potentially broken nameservers. A lot of domains will not be resolvable when this option in enabled. Only use if you know what you are doing. This option only has effect when qname-minimisation is enabled.";
+  if(hintid == 23) hinttext="Place unbound.conf options to add to the server: clause.";
+	if(hintid == 24) hinttext="Place unbound.conf options to add outside the server: clause (e.g. local-zone, stub-zone, remote-control, etc.)";
 	return overlib(hinttext, HAUTO, VAUTO);
 }
 
@@ -441,7 +449,7 @@ function applySettings(){
 			</tr>
 		</thead>
         <tr>
-                <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(18);">DNS Rebind Protection</a></th>
+                <th><a class="hintstyle" href="javascript:void(0);" onclick="openHint(50,9);">DNS Rebind Protection</a></th>
                 <td>
                         <input type="radio" name="unbound_rebind_protection" class="input" onclick="hide_dnsrebind(this.value);" value="1" >Yes
 						<input type="radio" name="unbound_rebind_protection" class="input" onclick="hide_dnsrebind(this.value);" value="0" >No
