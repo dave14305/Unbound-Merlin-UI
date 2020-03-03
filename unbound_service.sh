@@ -639,7 +639,11 @@ if [ "$#" -ge "1" ]; then
   case "$1" in
     restart)
       generate_conf
-      $UB_CONTROL reload
+      [ -n "$(pidof unbound)" ] && $UB_CONTROL_CFG reload || $UB_CONTROL_CFG start
+      service restart_dnsmasq
+      ;;
+    stop)
+      $UB_CONTROL_CFG stop
       service restart_dnsmasq
       ;;
     *)

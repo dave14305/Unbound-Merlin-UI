@@ -48,8 +48,8 @@ function YazHint(hintid) {
 	if(hintid == 15) hinttext="Time to live minimum for RRsets and messages in the cache. If the minimum kicks in, the data is cached for longer than the domain owner intended, and thus fewer queries are made to lookup the data. Zero makes sure the data in the cache is as the domain owner intended. Higher values, especially more than an hour or so, can lead to trouble as the data in the cache does not match up with the actual data any more.";
 	if(hintid == 16) hinttext="Send minimum amount of information to upstream servers to enhance privacy.";
 	if(hintid == 17) hinttext="QNAME minimisation in strict mode. Do not fall-back to sending full QNAME to potentially broken nameservers. A lot of domains will not be resolvable when this option in enabled. Only use if you know what you are doing. This option only has effect when qname-minimisation is enabled.";
-	if(hintid == 19) hinttext="Allow these domains, and all their subdomains to contain private addresses. Give multiple times to allow multiple domain names to contain private addresses.";
-	if(hintid == 20) hinttext="QNAME minimisation in strict mode. Do not fall-back to sending full QNAME to potentially broken nameservers. A lot of domains will not be resolvable when this option in enabled. Only use if you know what you are doing. This option only has effect when qname-minimisation is enabled.";
+	if(hintid == 20) hinttext="Allow these domains, and all their subdomains to contain private addresses. Give multiple times to allow multiple domain names to contain private addresses.";
+	if(hintid == 19) hinttext="Block localhost (127.0.0.1) responses as well as private address responses.";
   if(hintid == 23) hinttext="Place unbound.conf options to add to the server: clause.";
 	if(hintid == 24) hinttext="Place unbound.conf options to add outside the server: clause (e.g. local-zone, stub-zone, remote-control, etc.)";
 	return overlib(hinttext, HAUTO, VAUTO);
@@ -202,6 +202,9 @@ function applySettings(){
     return false;
     }
 
+  if (document.form.unbound_enable.value == "0") {
+		document.form.action_script.value = "stop_unbound";
+	}
         /* Retrieve value from input fields, and store in object */
         custom_settings.unbound_enable = document.form.unbound_enable.value;
         custom_settings.unbound_control = document.form.unbound_control.value;
