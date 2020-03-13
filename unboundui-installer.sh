@@ -10,6 +10,7 @@ install_unbound() {
   else
     echo "Entware not installed. Please install via AMTM."
     return 1
+  fi
 }
 
 if [ ! -f /opt/sbin/unbound ]; then
