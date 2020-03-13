@@ -37,4 +37,5 @@ sed -i "s/Unbound.asp/$am_webui_page/g" /www/user/$am_webui_page
 sed -i "/url: \"Tools_OtherSettings.asp\", tabName:/a {url: \"$am_webui_page\", tabName: \"Unbound\"}," /tmp/menuTree.js
 
 # sed and binding mounts don't work well together, so remount modified file
-umount /www/require/modules/menuTree.js && mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
+umount /www/require/modules/menuTree.js 2>/dev/null
+mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
