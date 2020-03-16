@@ -28,8 +28,8 @@
 # Unbound Directory locations
 UB_BINDIR=/opt/sbin
 UB_VARDIR=/opt/var/lib/unbound
-UB_PIDFILE=$UB_VARDIR/unbound.pid
 UB_ADDON_DIR=/jffs/addons/unboundui
+UB_PIDFILE=$UB_VARDIR/unbound.pid
 
 # conf deconstructed
 UB_TOTAL_CONF=$UB_VARDIR/unbound.conf
@@ -45,12 +45,6 @@ UB_TLS_ETC_FILE=/etc/ssl/certs/ca-certificates.crt
 # start files
 UB_RKEY_FILE=$UB_VARDIR/root.key
 UB_RHINT_FILE=$UB_VARDIR/root.hints
-
-# control app keys
-UB_CTLKEY_FILE=$UB_VARDIR/unbound_control.key
-UB_CTLPEM_FILE=$UB_VARDIR/unbound_control.pem
-UB_SRVKEY_FILE=$UB_VARDIR/unbound_server.key
-UB_SRVPEM_FILE=$UB_VARDIR/unbound_server.pem
 
 # helper apps
 UB_ANCHOR=$UB_BINDIR/unbound-anchor
@@ -103,14 +97,6 @@ unbound_mkdir() {
   chown -R nobody:nobody "$UB_VARDIR"
   chmod 755 "$UB_VARDIR"
   chmod 644 "$UB_VARDIR"/*
-
-  if [ -f "$UB_CTLKEY_FILE" ] || [ -f "$UB_CTLPEM_FILE" ] \
-  || [ -f "$UB_SRVKEY_FILE" ] || [ -f "$UB_SRVPEM_FILE" ] ; then
-    # Keys (some) exist already; do not create new ones
-    chmod 640 "$UB_CTLKEY_FILE" "$UB_CTLPEM_FILE" \
-              "$UB_SRVKEY_FILE" "$UB_SRVPEM_FILE"
-  fi
-
 
   if [ "$(nvram get ntp_ready)" -eq "1" ] ; then
     # NTP is done so its like you actually had an RTC
@@ -422,7 +408,7 @@ unbound_include() {
     } >> $UB_TOTAL_CONF
   fi
 
-  if [ -f "$UB_SRV_CONF" ] ; then
+  if [ -s "$UB_SRV_CONF" ] ; then
     {
       # Pull your own "server:" options here
       echo "include: $UB_SRV_CONF"
@@ -445,7 +431,7 @@ unbound_include() {
     } >> $UB_TOTAL_CONF
   fi
 
-  if [ -f "$UB_EXT_CONF" ] ; then
+  if [ -s "$UB_EXT_CONF" ] ; then
     {
       # Pull your own extend feature clauses here
       echo "include: $UB_EXT_CONF"
@@ -456,6 +442,7 @@ unbound_include() {
 
 generate_conf() {
   logger -t unbound "Configuring Unbound..."
+  cp -p "$UB_TOTAL_CONF" "$UB_TOTAL_CONF".keep
   # get configuration options from Merlin API
   unbound_uci
   # create necessary directories and files
@@ -466,10 +453,15 @@ generate_conf() {
   unbound_control
   # merge
   unbound_include
+  [ -f /jffs/scripts/unbound.postconf ] && . $UB_ADDON_DIR/unbound.postconf "$UB_TOTAL_CONF"
   # check final configuration file for errors, log results in syslog
-  $UB_CHECKCONF "$UB_TOTAL_CONF" 2>&1 | logger -t unbound
-  # is the config valid? Need to handle errors; save previous config?
-  logger -t unbound "Unbound Configuration complete."
+  if $UB_CHECKCONF "$UB_TOTAL_CONF" 1>/dev/null 2>&1; then
+    logger -t unbound "Unbound Configuration complete."
+  else
+    logger -t unbound "Unbound Configuration errors. Reverting to previous config."
+    cp -p "$UB_TOTAL_CONF" "$UB_TOTAL_CONF".bad
+    mv -f "$UB_TOTAL_CONF".keep "$UB_TOTAL_CONF"
+  fi
 }
 
 unbound_mountui() {
