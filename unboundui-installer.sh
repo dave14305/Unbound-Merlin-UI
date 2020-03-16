@@ -46,5 +46,20 @@ if ! grep -vE "^#" /jffs/scripts/service-event | grep -qF "sh $MyAddonDir/unboun
   echo "$cmdline" >> /jffs/scripts/service-event
 fi
 
+if [ ! -f "/jffs/scripts/services-start" ]; then
+    echo "#!/bin/sh" > /jffs/scripts/services-start
+    echo >> /jffs/scripts/services-start
+elif [ -f "/jffs/scripts/services-start" ] && ! head -1 /jffs/scripts/services-start | grep -qE "^#!/bin/sh"; then
+    sed -i '1s~^~#!/bin/sh\n~' /jffs/scripts/services-start
+fi
+if [ ! -x "/jffs/scripts/services-start" ]; then
+  chmod 755 /jffs/scripts/services-start
+fi
+if ! grep -vE "^#" /jffs/scripts/services-start | grep -qF "sh $MyAddonDir/unboundui-enable.sh"; then
+  cmdline="sh $MyAddonDir/unboundui-enable.sh # Unbound-UI Addition"
+  sed -i '\~# Unbound-UI Addition~d' /jffs/scripts/services-start
+  echo "$cmdline" >> /jffs/scripts/services-start
+fi
+
 echo "Enabling Unbound UI..."
 . $MyAddonDir/unboundui-enable.sh
