@@ -486,6 +486,9 @@ unbound_mountui() {
     exit 5
   fi
 
+  # Obtain the first available mount point in $am_webui_page
+  am_get_webui_page $UB_ADDON_DIR/Unbound.asp
+
   if [ "$am_webui_page" = "none" ]
   then
       logger "Unbound-UI" "Unable to install Unbound-UI"
@@ -511,6 +514,46 @@ unbound_mountui() {
   mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
 }
 
+unbound_unmountui() {
+
+  # Remove unbound tab from menu. TODO - don't also delete Unbound stats page
+  sed -i "\~tabName: \"Unbound\"},~d" /tmp/menuTree.js
+  umount /www/require/modules/menuTree.js 2>/dev/null
+  if diff /tmp/menuTree.js /www/require/modules/menuTree.js; then
+    rm /tmp/menuTree.js
+  else
+    # Still some modifications from another script so remount
+    mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
+  fi
+
+  # Does the firmware support addons?
+  nvram get rc_support | grep -q am_addons
+  if [ $? != 0 ]
+  then
+      logger "Unbound-UI" "This firmware does not support addons!"
+      exit 5
+  fi
+
+  if [ ! -f $UB_ADDON_DIR/Unbound.asp ]; then
+    logger "Unbound-UI" "WebUI files missing!"
+    exit 5
+  fi
+
+  am_get_webui_page $UB_ADDON_DIR/Unbound.asp
+
+  if [ "$am_webui_page" = "none" ]
+  then
+      logger "Unbound-UI" "Unmount: web page not present"
+  elif [ -f /www/user/$am_webui_page ]; then
+      rm /www/user/$am_webui_page && logger "Unbound-UI" "Unmount: page removed"
+  fi
+  for i in $(/bin/grep -l UnboundUI-by-dave14305 /www/user/user*.asp 2>/dev/null)
+  do
+    rm $i
+  done
+
+}
+
 # main
 if [ "$#" -ge "1" ]; then
   case "$1" in
@@ -529,6 +572,9 @@ if [ "$#" -ge "1" ]; then
       ;;
     mountui)
       unbound_mountui
+      ;;
+    unmountui)
+      unbound_unmountui
       ;;
     *)
       logger -t unbound "Unrecognized service handler $*"
