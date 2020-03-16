@@ -29,6 +29,7 @@
 UB_BINDIR=/opt/sbin
 UB_VARDIR=/opt/var/lib/unbound
 UB_PIDFILE=$UB_VARDIR/unbound.pid
+UB_ADDON_DIR=/jffs/addons/unboundui
 
 # conf deconstructed
 UB_TOTAL_CONF=$UB_VARDIR/unbound.conf
@@ -471,6 +472,45 @@ generate_conf() {
   logger -t unbound "Unbound Configuration complete."
 }
 
+unbound_mountui() {
+  # Does the firmware support addons?
+  nvram get rc_support | grep -q am_addons
+  if [ $? != 0 ]
+  then
+      logger "Unbound-UI" "This firmware does not support addons!"
+      exit 5
+  fi
+
+  if [ ! -f $UB_ADDON_DIR/Unbound.asp ]; then
+    logger "Unbound-UI" "WebUI files missing!"
+    exit 5
+  fi
+
+  if [ "$am_webui_page" = "none" ]
+  then
+      logger "Unbound-UI" "Unable to install Unbound-UI"
+      exit 5
+  fi
+  logger "Unbound-UI" "Mounting Unbound-UI as $am_webui_page"
+
+  # Copy custom page
+  cp $UB_ADDON_DIR/Unbound.asp /www/user/$am_webui_page
+
+  # Copy menuTree (if no other script has done it yet) so we can modify it
+  if [ ! -f /tmp/menuTree.js ]
+  then
+      cp /www/require/modules/menuTree.js /tmp/
+      mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
+  fi
+
+  # Insert link at the end of the Tools menu.  Match partial string, since tabname can change between builds (if using an AS tag)
+  sed -i "/url: \"Tools_OtherSettings.asp\", tabName:/a {url: \"$am_webui_page\", tabName: \"Unbound\"}," /tmp/menuTree.js
+
+  # sed and binding mounts don't work well together, so remount modified file
+  umount /www/require/modules/menuTree.js 2>/dev/null
+  mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
+}
+
 # main
 if [ "$#" -ge "1" ]; then
   case "$1" in
@@ -486,6 +526,9 @@ if [ "$#" -ge "1" ]; then
     stop)
       $UB_CONTROL_CFG stop
       service restart_dnsmasq
+      ;;
+    mountui)
+      unbound_mountui
       ;;
     *)
       logger -t unbound "Unrecognized service handler $*"

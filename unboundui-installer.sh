@@ -23,10 +23,8 @@ if [ ! -d $MyAddonDir ]; then
 fi
 
 curl -o $MyAddonDir/Unbound.asp https://raw.githubusercontent.com/dave14305/Unbound-Merlin-UI/master/Unbound.asp
-curl -o $MyAddonDir/unboundui-enable.sh https://raw.githubusercontent.com/dave14305/Unbound-Merlin-UI/master/unboundui-enable.sh
 curl -o $MyAddonDir/unbound_service.sh https://raw.githubusercontent.com/dave14305/Unbound-Merlin-UI/master/unbound_service.sh
 
-[ -f $MyAddonDir/unboundui-enable.sh ] && chmod 755 $MyAddonDir/unboundui-enable.sh || echo "Error downloading enable script!"
 [ -f $MyAddonDir/unbound_service.sh ] && chmod 755 $MyAddonDir/unbound_service.sh || echo "Error downloading service script!"
 
 # Borrowed from Adamm00
@@ -55,11 +53,11 @@ fi
 if [ ! -x "/jffs/scripts/services-start" ]; then
   chmod 755 /jffs/scripts/services-start
 fi
-if ! grep -vE "^#" /jffs/scripts/services-start | grep -qF "sh $MyAddonDir/unboundui-enable.sh"; then
-  cmdline="sh $MyAddonDir/unboundui-enable.sh # Unbound-UI Addition"
+if ! grep -vE "^#" /jffs/scripts/services-start | grep -qF "sh $MyAddonDir/unbound_service.sh"; then
+  cmdline="sh $MyAddonDir/unbound_service.sh mountui # Unbound-UI Addition"
   sed -i '\~# Unbound-UI Addition~d' /jffs/scripts/services-start
   echo "$cmdline" >> /jffs/scripts/services-start
 fi
 
 echo "Enabling Unbound UI..."
-. $MyAddonDir/unboundui-enable.sh
+. $MyAddonDir/unbound_service.sh mountui
