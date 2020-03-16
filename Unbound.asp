@@ -1,4 +1,5 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+/* UnboundUI-by-dave14305
 <html xmlns="http://www.w3.org/1999/xhtml">
 <html xmlns:v>
 <head>
@@ -19,7 +20,6 @@
 <script language="JavaScript" type="text/javascript" src="/help.js"></script>
 <script language="JavaScript" type="text/javascript" src="/tmmenu.js"></script>
 <script language="JavaSCript" type="text/javascript" src="/js/jquery.js"></script>
-<script language="JavaScript" type="text/javascript" src="/disk_functions.js"></script>
 <script language="JavaScript" type="text/javascript" src="/base64.js"></script>
 
 <script>
@@ -186,7 +186,7 @@ function applySettings(){
         custom_settings.unbound_domain_rebindok = Base64.encode(document.getElementById('unbound_domain_rebindok').value);
         custom_settings.unbound_domain_insecure = Base64.encode(document.getElementById('unbound_domain_insecure').value);
         custom_settings.unbound_custom_server = Base64.encode(document.getElementById('unbound_custom_server').value);
-        custom_settings.unbound_custom_server = Base64.encode(document.getElementById('unbound_custom_extend').value);
+        custom_settings.unbound_custom_extend = Base64.encode(document.getElementById('unbound_custom_extend').value);
         custom_settings.unbound_statslog = document.form.unbound_statslog.value;
 
         /* Store object as a string in the amng_custom hidden input field */
@@ -392,7 +392,7 @@ function applySettings(){
 		</thead>
         <tr>
                 <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(23);">Custom server: configuration</a></th>
-                <td>
+							  <td>
                         <textarea rows="5" class="textarea_ssh_table" id="unbound_custom_server" spellcheck="false" name="unbound_custom_server" cols="50" maxlength="2249"></textarea>
                 </td>
         </tr>
