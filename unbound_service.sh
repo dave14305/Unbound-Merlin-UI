@@ -506,12 +506,13 @@ unbound_mountui() {
       mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
   fi
 
-  # Insert link at the end of the Tools menu.  Match partial string, since tabname can change between builds (if using an AS tag)
-  sed -i "/url: \"Tools_OtherSettings.asp\", tabName:/a {url: \"$am_webui_page\", tabName: \"Unbound\"}," /tmp/menuTree.js
-
-  # sed and binding mounts don't work well together, so remount modified file
-  umount /www/require/modules/menuTree.js 2>/dev/null
-  mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
+  if ! /bin/grep "{url: \"$am_webui_page\", tabName: \"Unbound\"}," /tmp/menuTree.js >/dev/null 2>&1; then
+    # Insert link at the end of the Tools menu.  Match partial string, since tabname can change between builds (if using an AS tag)
+    sed -i "/url: \"Tools_OtherSettings.asp\", tabName:/a {url: \"$am_webui_page\", tabName: \"Unbound\"}," /tmp/menuTree.js
+    # sed and binding mounts don't work well together, so remount modified file
+    umount /www/require/modules/menuTree.js 2>/dev/null
+    mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
+  fi
 }
 
 unbound_unmountui() {
