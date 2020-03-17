@@ -49,7 +49,6 @@ UB_RHINT_FILE=$UB_VARDIR/root.hints
 # helper apps
 UB_ANCHOR=$UB_BINDIR/unbound-anchor
 UB_CONTROL=$UB_BINDIR/unbound-control
-UB_CONTROL_CFG="$UB_CONTROL -c $UB_TOTAL_CONF"
 UB_CHECKCONF=$UB_BINDIR/unbound-checkconf
 
 # Source ASUSWRT-Merlin helper functions
@@ -194,7 +193,9 @@ unbound_conf() {
 
 # Common protocol settings
   {
-    echo "  edns-buffer-size: $UB_N_EDNS_SIZE"
+    if [ "$UB_N_EDNS_SIZE" -lt 4096 ]; then
+      echo "  edns-buffer-size: $UB_N_EDNS_SIZE"
+    fi
     echo "  outgoing-port-permit: 10240-65535"
     if [ "$UB_N_RX_PORT" -ge 10240 ] && [ "$UB_N_RX_PORT" -le 65535 ]; then
       echo "  outgoing-port-avoid: $UB_N_RX_PORT"
@@ -572,18 +573,18 @@ if [ "$#" -ge "1" ]; then
       generate_conf
       if [ -n "$(pidof unbound)" ]; then
         if [ $restart_action = "restart" ]; then
-          $UB_CONTROL_CFG stop
-          $UB_CONTROL_CFG start
+          $UB_CONTROL stop
+          $UB_CONTROL start
         else
-          $UB_CONTROL_CFG reload
+          $UB_CONTROL reload
         fi
       else
-        $UB_CONTROL_CFG start
+        $UB_CONTROL start
       fi
       service restart_dnsmasq
       ;;
     stop)
-      $UB_CONTROL_CFG stop
+      $UB_CONTROL stop
       service restart_dnsmasq
       ;;
     mountui)
