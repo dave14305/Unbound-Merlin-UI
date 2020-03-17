@@ -199,7 +199,8 @@ unbound_conf() {
     if [ "$UB_N_RX_PORT" -ge 10240 ] && [ "$UB_N_RX_PORT" -le 65535 ]; then
       echo "  outgoing-port-avoid: $UB_N_RX_PORT"
     fi
-    echo "  interface: 127.0.0.1@$UB_N_RX_PORT"
+    echo "  port: $UB_N_RX_PORT"
+    echo "  interface: 127.0.0.1"
   } >> "$UB_CORE_CONF"
 
   if [ "$(nvram get ipv6_service)" != "disabled" ]; then
@@ -547,13 +548,35 @@ unbound_unmountui() {
 
 }
 
+dnsmasq_postconf() {
+  CONFIG="$1"
+  UNBOUNDLISTENADDR="$(am_settings_get unbound_listen_port)"
+  if [ -n "$(pidof unbound)" ] && [ -n "$UNBOUNDLISTENADDR" ]; then
+        pc_delete "servers-file" "$CONFIG"
+        pc_append "server=127.0.0.1#$UNBOUNDLISTENADDR" "$CONFIG"
+        pc_replace "cache-size=1500" "cache-size=0" "$CONFIG"
+        pc_delete "trust-anchor=" "$CONFIG"
+        pc_delete "dnssec" "$CONFIG"
+        pc_append "proxy-dnssec" "$CONFIG"
+  fi
+}
+
+export TZ=$(cat /etc/TZ)
 # main
 if [ "$#" -ge "1" ]; then
   case "$1" in
     restart)
+      if [ "$(am_settings_get unbound_listen_port)" != "$($UB_CHECKCONF -o port)" ]; then
+        restart_action="restart"
+      fi
       generate_conf
       if [ -n "$(pidof unbound)" ]; then
-        $UB_CONTROL_CFG reload
+        if [ $restart_action = "restart" ]; then
+          $UB_CONTROL_CFG stop
+          $UB_CONTROL_CFG start
+        else
+          $UB_CONTROL_CFG reload
+        fi
       else
         $UB_CONTROL_CFG start
       fi
@@ -568,6 +591,9 @@ if [ "$#" -ge "1" ]; then
       ;;
     unmountui)
       unbound_unmountui
+      ;;
+    dnsmasq_postconf)
+      dnsmasq_postconf "$2"
       ;;
     *)
       logger -t unbound "Unrecognized service handler $*"
