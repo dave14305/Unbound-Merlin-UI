@@ -358,7 +358,7 @@ unbound_uci() {
   UB_D_VERBOSE=$(am_settings_get unbound_verbosity); [ -z "$UB_D_VERBOSE" ] && UB_D_VERBOSE=1
   UB_B_EXT_STATS=$(am_settings_get unbound_extended_stats); [ -z "$UB_B_EXT_STATS" ] && UB_B_EXT_STATS=0
   UB_N_EDNS_SIZE=$(am_settings_get unbound_edns_size); [ -z "$UB_N_EDNS_SIZE" ] && UB_N_EDNS_SIZE=1280
-  UB_N_RX_PORT=$(am_settings_get unbound_listen_port); [ -z "$UB_N_RX_PORT" ] && UB_N_RX_PORT=53535
+  UB_N_RX_PORT=$(am_settings_get unbound_listen_port); [ -z "$UB_N_RX_PORT" ] && UB_N_RX_PORT=5653
   UB_D_RESOURCE=$(am_settings_get unbound_resource); [ -z "$UB_D_RESOURCE" ] && UB_D_RESOURCE=default
   UB_D_RECURSION=$(am_settings_get unbound_recursion); [ -z "$UB_D_RECURSION" ] && UB_D_RECURSION=passive
   UB_B_QUERY_MIN=$(am_settings_get unbound_query_minimize); [ -z "$UB_B_QUERY_MIN" ] && UB_B_QUERY_MIN=1
@@ -379,7 +379,7 @@ unbound_uci() {
   if [ "$UB_N_RX_PORT" -ne 53 ] \
   && { [ "$UB_N_RX_PORT" -lt 1024 ] || [ 65535 -lt "$UB_N_RX_PORT" ] ; } ; then
     logger -t unbound -s "privileged port or in 5 digits, using default"
-    UB_N_RX_PORT=53535
+    UB_N_RX_PORT=5653
   fi
 
   if [ "$UB_TTL_MIN" -gt 1800 ] ; then
