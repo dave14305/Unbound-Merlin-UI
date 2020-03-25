@@ -85,4 +85,4 @@ if ! grep -vE "^#" /jffs/scripts/dnsmasq.postconf | grep -qF "sh $MyAddonDir/unb
 fi
 
 echo "Enabling Unbound UI..."
-. $MyAddonDir/unbound_service.sh mountui
+sh $MyAddonDir/unbound_service.sh mountui
