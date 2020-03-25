@@ -552,7 +552,9 @@ unbound_unmountui() {
 dnsmasq_postconf() {
   CONFIG="$1"
   UNBOUNDLISTENADDR="$(am_settings_get unbound_listen_port)"
-  if [ -n "$(pidof unbound)" ] && [ -n "$UNBOUNDLISTENADDR" ]; then
+  UNBOUNDENABLED="$(am_settings_get unbound_enable)"
+
+  if [ "$UNBOUNDENABLED" = "1" ] && [ -n "$UNBOUNDLISTENADDR" ]; then
         pc_delete "servers-file" "$CONFIG"
         pc_append "server=127.0.0.1#$UNBOUNDLISTENADDR" "$CONFIG"
         pc_replace "cache-size=1500" "cache-size=0" "$CONFIG"
@@ -581,11 +583,9 @@ if [ "$#" -ge "1" ]; then
       else
         $UB_CONTROL start
       fi
-      service restart_dnsmasq
       ;;
     stop)
       $UB_CONTROL stop
-      service restart_dnsmasq
       ;;
     mountui)
       unbound_mountui
