@@ -238,7 +238,6 @@
                                             <div class="formfonttitle">Unbound DNS Recursive Resolver</div>
                                             <div style="margin:10px 0 10px 5px;" class="splitLine"></div>
                                             <div class="formfontdesc">Unbound is a validating, recursive, caching DNS resolver. It is designed to be fast and lean and incorporates modern features based on open standards.</div>
-
                                             <table width="100%" border="1" align="center" cellpadding="4" cellspacing="0" bordercolor="#6b8fa3" class="FormTable">
                                                 <thead>
                                                     <tr>
@@ -258,7 +257,6 @@
                                                     <td>
                                                         <input type="text" maxlength="5" class="input_6_table" id="unbound_listen_port" onKeyPress="return validator.isNumber(this,event);" value="0">
                                                         <span>Default: 5653</span>
-
                                                     </td>
                                                 </tr>
                                                 <thead>
