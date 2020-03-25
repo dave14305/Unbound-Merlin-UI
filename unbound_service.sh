@@ -464,7 +464,7 @@ generate_conf() {
 
 unbound_mountui() {
   # Does the firmware support addons?
-  if nvram get rc_support | grep -q am_addons;
+  if ! nvram get rc_support | grep -q am_addons;
   then
       logger "Unbound-UI" "This firmware does not support addons!"
       exit 5
@@ -517,7 +517,7 @@ unbound_unmountui() {
   fi
 
   # Does the firmware support addons?
-  if nvram get rc_support | grep -q am_addons;
+  if ! nvram get rc_support | grep -q am_addons;
   then
       logger "Unbound-UI" "This firmware does not support addons!"
       exit 5
