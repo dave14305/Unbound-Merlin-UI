@@ -51,12 +51,13 @@ UB_ANCHOR=$UB_BINDIR/unbound-anchor
 UB_CONTROL=$UB_BINDIR/unbound-control
 UB_CHECKCONF=$UB_BINDIR/unbound-checkconf
 
+# necessary for proper timezone in unbound.log
+export TZ=$(cat /etc/TZ)
+
 # Source ASUSWRT-Merlin helper functions
 . /usr/sbin/helper.sh
 
 unbound_mkdir() {
-  local filestuff
-
   if [ -f "$UB_RKEY_FILE" ] ; then
     filestuff=$( cat "$UB_RKEY_FILE" )
 
@@ -97,13 +98,13 @@ unbound_mkdir() {
   chmod 755 "$UB_VARDIR"
   chmod 644 "$UB_VARDIR"/*
 
-  if [ "$(nvram get ntp_ready)" -eq "1" ] ; then
-    # NTP is done so its like you actually had an RTC
-    UB_B_NTP_BOOT=0
-  else
-    # DNSSEC-TIME will not reconcile
-    UB_B_NTP_BOOT=1
-  fi
+  # if [ "$(nvram get ntp_ready)" -eq "1" ] ; then
+  #   # NTP is done so its like you actually had an RTC
+  #   UB_B_NTP_BOOT=0
+  # else
+  #   # DNSSEC-TIME will not reconcile
+  #   UB_B_NTP_BOOT=1
+  # fi
 }
 
 ##############################################################################
@@ -124,7 +125,6 @@ unbound_control() {
 ##############################################################################
 
 unbound_conf() {
-  local rt_mem rt_conn rt_buff modulestring domain
 
   {
     # server: for this whole function
@@ -352,6 +352,7 @@ unbound_conf() {
 
 unbound_uci() {
 
+  UB_B_ENABLED="$(am_settings_get unbound_enable)"; [ -z "$UB_B_ENABLED" ] && UB_B_ENABLED=0
   UB_B_DNSSEC=$(nvram get dnssec_enable); [ -z "$UB_B_DNSSEC" ] && UB_B_DNSSEC=1
   UB_D_LOGDEST=$(am_settings_get unbound_logdest); [ -z "$UB_D_LOGDEST" ] && UB_D_LOGDEST=syslog
   UB_D_LOGEXTRA=$(am_settings_get unbound_logextra); [ -z "$UB_D_LOGEXTRA" ] && UB_D_LOGEXTRA=0
@@ -372,18 +373,15 @@ unbound_uci() {
   UB_D_STATSLOG=$(am_settings_get unbound_statslog); [ -z "$UB_D_STATSLOG" ] && UB_D_STATSLOG=0
 
   if [ "$UB_N_EDNS_SIZE" -lt 512 ] || [ 4096 -lt "$UB_N_EDNS_SIZE" ] ; then
-    logger -t unbound -s "edns_size exceeds range, using default"
     UB_N_EDNS_SIZE=1280
   fi
 
   if [ "$UB_N_RX_PORT" -ne 53 ] \
   && { [ "$UB_N_RX_PORT" -lt 1024 ] || [ 65535 -lt "$UB_N_RX_PORT" ] ; } ; then
-    logger -t unbound -s "privileged port or in 5 digits, using default"
     UB_N_RX_PORT=5653
   fi
 
   if [ "$UB_TTL_MIN" -gt 1800 ] ; then
-    logger -t unbound -s "ttl_min could have had awful side effects, using 300"
     UB_TTL_MIN=300
   fi
 }
@@ -445,8 +443,6 @@ unbound_include() {
 generate_conf() {
   logger -t unbound "Configuring Unbound..."
   cp -p "$UB_TOTAL_CONF" "$UB_TOTAL_CONF".keep
-  # get configuration options from Merlin API
-  unbound_uci
   # create necessary directories and files
   unbound_mkdir
   # server:
@@ -455,7 +451,7 @@ generate_conf() {
   unbound_control
   # merge
   unbound_include
-  [ -f /jffs/scripts/unbound.postconf ] && . $UB_ADDON_DIR/unbound.postconf "$UB_TOTAL_CONF"
+  [ -f /jffs/scripts/unbound.postconf ] && sh $UB_ADDON_DIR/unbound.postconf "$UB_TOTAL_CONF"
   # check final configuration file for errors, log results in syslog
   if $UB_CHECKCONF "$UB_TOTAL_CONF" 1>/dev/null 2>&1; then
     logger -t unbound "Unbound Configuration complete."
@@ -468,8 +464,7 @@ generate_conf() {
 
 unbound_mountui() {
   # Does the firmware support addons?
-  nvram get rc_support | grep -q am_addons
-  if [ $? != 0 ]
+  if nvram get rc_support | grep -q am_addons;
   then
       logger "Unbound-UI" "This firmware does not support addons!"
       exit 5
@@ -491,7 +486,7 @@ unbound_mountui() {
   logger "Unbound-UI" "Mounting Unbound-UI as $am_webui_page"
 
   # Copy custom page
-  cp $UB_ADDON_DIR/Unbound.asp /www/user/$am_webui_page
+  cp $UB_ADDON_DIR/Unbound.asp /www/user/"$am_webui_page"
 
   # Copy menuTree (if no other script has done it yet) so we can modify it
   if [ ! -f /tmp/menuTree.js ]
@@ -522,8 +517,7 @@ unbound_unmountui() {
   fi
 
   # Does the firmware support addons?
-  nvram get rc_support | grep -q am_addons
-  if [ $? != 0 ]
+  if nvram get rc_support | grep -q am_addons;
   then
       logger "Unbound-UI" "This firmware does not support addons!"
       exit 5
@@ -539,42 +533,40 @@ unbound_unmountui() {
   if [ "$am_webui_page" = "none" ]
   then
       logger "Unbound-UI" "Unmount: web page not present"
-  elif [ -f /www/user/$am_webui_page ]; then
-      rm /www/user/$am_webui_page && logger "Unbound-UI" "Unmount: page removed"
+  elif [ -f /www/user/"$am_webui_page" ]; then
+      rm /www/user/"$am_webui_page" && logger "Unbound-UI" "Unmount: page removed"
   fi
   for i in $(/bin/grep -l UnboundUI-by-dave14305 /www/user/user*.asp 2>/dev/null)
   do
-    rm $i
+    rm "$i"
   done
 
 }
 
 dnsmasq_postconf() {
-  CONFIG="$1"
-  UNBOUNDLISTENADDR="$(am_settings_get unbound_listen_port)"
-  UNBOUNDENABLED="$(am_settings_get unbound_enable)"
 
-  if [ "$UNBOUNDENABLED" = "1" ] && [ -n "$UNBOUNDLISTENADDR" ]; then
-        pc_delete "servers-file" "$CONFIG"
-        pc_append "server=127.0.0.1#$UNBOUNDLISTENADDR" "$CONFIG"
-        pc_replace "cache-size=1500" "cache-size=0" "$CONFIG"
-        pc_delete "trust-anchor=" "$CONFIG"
-        pc_delete "dnssec" "$CONFIG"
-        pc_append "proxy-dnssec" "$CONFIG"
+  if [ "$UB_B_ENABLED" = "1" ] && [ -n "$UB_N_RX_PORT" ]; then
+        pc_delete "servers-file" "$1"
+        pc_append "server=127.0.0.1#$UB_N_RX_PORT" "$1"
+        pc_replace "cache-size=1500" "cache-size=0" "$1"
+        pc_delete "trust-anchor=" "$1"
+        pc_delete "dnssec" "$1"
+        pc_append "proxy-dnssec" "$1"
   fi
 }
 
-export TZ=$(cat /etc/TZ)
 # main
 if [ "$#" -ge "1" ]; then
+  # get configuration options from Merlin API
+  unbound_uci
   case "$1" in
     restart)
-      if [ "$(am_settings_get unbound_listen_port)" != "$($UB_CHECKCONF -o port)" ]; then
+      if [ "$UB_N_RX_PORT" != "$($UB_CHECKCONF -o port)" ]; then
         restart_action="restart"
       fi
       generate_conf
       if [ -n "$(pidof unbound)" ]; then
-        if [ $restart_action = "restart" ]; then
+        if [ "$restart_action" = "restart" ]; then
           $UB_CONTROL stop
           $UB_CONTROL start
         else
