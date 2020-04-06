@@ -547,6 +547,8 @@ dnsmasq_postconf() {
 
   if [ "$UB_B_ENABLED" = "1" ] && [ -n "$UB_N_RX_PORT" ]; then
         pc_delete "servers-file" "$1"
+        pc_delete "resolv-file" "$1"  # for John's fork
+        pc_delete "server=127.0." "$1"  # to disable other DNS services (e.g. Unbound, dnscrypt-proxy, Stubby)
         pc_append "server=127.0.0.1#$UB_N_RX_PORT" "$1"
         pc_replace "cache-size=1500" "cache-size=0" "$1"
         pc_delete "trust-anchor=" "$1"
