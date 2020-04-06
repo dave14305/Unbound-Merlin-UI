@@ -679,6 +679,9 @@ if [ "$#" -ge "1" ]; then
     dnsmasq_postconf)
       dnsmasq_postconf "$2"
       ;;
+    install)
+      install_unboundui
+      ;;
     *)
       logger -t unbound "Unrecognized service handler $*"
       ;;
