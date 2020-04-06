@@ -16,12 +16,27 @@
 
     <script language="JavaScript" type="text/javascript" src="/state.js"></script>
     <script language="JavaScript" type="text/javascript" src="/general.js"></script>
-    <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
     <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
     <script language="JavaScript" type="text/javascript" src="/help.js"></script>
     <script language="JavaScript" type="text/javascript" src="/tmmenu.js"></script>
-    <script language="JavaSCript" type="text/javascript" src="/js/jquery.js"></script>
-    <script language="JavaScript" type="text/javascript" src="/base64.js"></script>
+    <script>
+    (function() {
+      if ( <% nvram_get("buildno"); %> == "374.43" )
+      {
+      // Not sure why new jquery.js breaks the page, but not using it so far.
+      // document.write('<script src="/jquery.js"><\/script>');
+      document.write('<script src="/user/base64.js"><\/script>');
+      document.write('<script src="/detect.js"><\/script>');
+    	}
+    	else
+      {
+      document.write('<script src="/validator.js"><\/script>');
+    	document.write('<script src="/js/jquery.js"><\/script>');
+      document.write('<script src="base64.js"><\/script>');
+    	}
+    }
+    )();
+    </script>
 
     <script>
         var custom_settings = <% get_custom_settings(); %>;
@@ -160,11 +175,33 @@
         }
 
         function applySettings() {
-            if (!validator.numberRange(document.form.unbound_edns_size, 512, 4096) ||
-                !validator.numberRange(document.form.unbound_listen_port, 1, 65535) ||
-                !validator.numberRange(document.form.unbound_ttl_min, 0, 1800) ||
-                !validator.numberRange(document.form.unbound_statslog, 0, 1440))
+            if ( <% nvram_get("buildno"); %> == "374.43" )
+            {
+              if (!validate_range(document.form.unbound_listen_port, 1, 65535)){
+                document.form.unbound_listen_port.focus();
                 return false;
+              }
+              if (!validate_range(document.form.unbound_statslog, 0, 1440)){
+                document.form.unbound_statslog.focus();
+                return false;
+              }
+              if (!validate_range(document.form.unbound_edns_size, 512, 4096)){
+                document.form.unbound_edns_size.focus();
+                return false;
+              }
+              if (!validate_range(document.form.unbound_ttl_min, 0, 1800)){
+                document.form.unbound_ttl_min.focus();
+                return false;
+              }
+            }
+            else
+            {
+            if (!validator.numberRange(document.form.unbound_listen_port, 1, 65535) ||
+                !validator.numberRange(document.form.unbound_statslog, 0, 1440) ||
+                !validator.numberRange(document.form.unbound_edns_size, 512, 4096) ||
+                !validator.numberRange(document.form.unbound_ttl_min, 0, 1800))
+                return false;
+            }
 
             if (document.form.unbound_listen_port.value == '53') {
                 alert("Port 53 conflicts with dnsmasq. Choose another port.");
@@ -311,30 +348,26 @@
                                                     </thead>
                                                     <th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,6);">Enable DNSSEC support</a></th>
                                                     <td>
-                                                        <input type="radio" value="1" name="dnssec_enable" <% nvram_match( "dnssec_enable", "1", "checked"); %> disabled />
-                                                        <#156#>
-                                                            <input type="radio" value="0" name="dnssec_enable" <% nvram_match( "dnssec_enable", "0", "checked"); %> disabled />
-                                                            <#155#>
-                                                                <span>Click <a style="color:#FC0;text-decoration: underline;" href="Advanced_WAN_Content.asp">here</a> to manage.</span>
+                                                        <input type="radio" value="1" name="dnssec_enable" <% nvram_match( "dnssec_enable", "1", "checked"); %> disabled />Yes
+                                                        <input type="radio" value="0" name="dnssec_enable" <% nvram_match( "dnssec_enable", "0", "checked"); %> disabled />No
+                                                        <span>Click <a style="color:#FC0;text-decoration: underline;" href="Advanced_WAN_Content.asp">here</a> to manage.</span>
                                                     </td>
                                                     <tr id="dnssecdom_tr">
                                                         <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(5);">Ignore DNSSEC Domains</a></th>
                                                         <td>
-                                                            <textarea rows="1" class="textarea_ssh_table" id="unbound_domain_insecure" spellcheck="false" name="unbound_domain_insecure" cols="50" maxlength="2249"></textarea>
+                                                            <textarea rows="1" class="textarea_ssh_table" style="height:auto" id="unbound_domain_insecure" spellcheck="false" name="unbound_domain_insecure" cols="50" maxlength="2249"></textarea>
                                                         </td>
                                                     </tr>
                                                     <th><a class="hintstyle" href="javascript:void(0);" onClick="openHint(50,9);">Enable DNS Rebind protection</a></th>
                                                     <td>
-                                                        <input type="radio" value="1" name="dns_norebind" <% nvram_match( "dns_norebind", "1", "checked"); %> disabled />
-                                                        <#156#>
-                                                            <input type="radio" value="0" name="dns_norebind" <% nvram_match( "dns_norebind", "0", "checked"); %> disabled />
-                                                            <#155#>
-                                                                <span>Click <a style="color:#FC0;text-decoration: underline;" href="Advanced_WAN_Content.asp">here</a> to manage.</span>
+                                                        <input type="radio" value="1" name="dns_norebind" <% nvram_match( "dns_norebind", "1", "checked"); %> disabled />Yes
+                                                        <input type="radio" value="0" name="dns_norebind" <% nvram_match( "dns_norebind", "0", "checked"); %> disabled />No
+                                                        <span>Click <a style="color:#FC0;text-decoration: underline;" href="Advanced_WAN_Content.asp">here</a> to manage.</span>
                                                     </td>
                                                     <tr id="dnsrebdom_tr">
                                                         <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(20);">Whitelisted rebind domains</a></th>
                                                         <td>
-                                                            <textarea rows="1" class="textarea_ssh_table" id="unbound_domain_rebindok" spellcheck="false" name="unbound_domain_rebindok" cols="50" maxlength="2249"></textarea>
+                                                            <textarea rows="1" class="textarea_ssh_table" style="height:auto" id="unbound_domain_rebindok" spellcheck="false" name="unbound_domain_rebindok" cols="50" maxlength="2249"></textarea>
                                                         </td>
                                                     </tr>
                                                     <thead>
@@ -397,13 +430,13 @@
                                                 <tr>
                                                     <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(23);">Custom server: configuration</a></th>
                                                     <td>
-                                                        <textarea rows="5" class="textarea_ssh_table" id="unbound_custom_server" spellcheck="false" name="unbound_custom_server" cols="50" maxlength="2249"></textarea>
+                                                        <textarea rows="5" class="textarea_ssh_table" style="height:auto" id="unbound_custom_server" spellcheck="false" name="unbound_custom_server" cols="50" maxlength="2249"></textarea>
                                                     </td>
                                                 </tr>
                                                 <tr>
                                                     <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(24);">Custom extended configuration</a></th>
                                                     <td>
-                                                        <textarea rows="5" class="textarea_ssh_table" id="unbound_custom_extend" spellcheck="false" name="unbound_custom_extend" cols="50" maxlength="2249"></textarea>
+                                                        <textarea rows="5" class="textarea_ssh_table" style="height:auto" id="unbound_custom_extend" spellcheck="false" name="unbound_custom_extend" cols="50" maxlength="2249"></textarea>
                                                     </td>
                                                 </tr>
                                             </table>
