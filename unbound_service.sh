@@ -329,7 +329,7 @@ unbound_conf() {
 
   if  [ -n "$UB_LIST_INSECURE" ] ; then
     {
-	  for domain in $(echo "$UB_LIST_INSECURE" | /opt/bin/base64 -d) ; do
+	  for domain in $(echo "$UB_LIST_INSECURE" | openssl enc -a -d) ; do
         # Except and accept domains without (DNSSEC); work around broken domains
         echo "  domain-insecure: $domain"
       done
@@ -339,7 +339,7 @@ unbound_conf() {
 
   if  [ -n "$UB_LIST_PRIVATE" ] ; then
     {
-	  for domain in $(echo "$UB_LIST_PRIVATE" | /opt/bin/base64 -d) ; do
+	  for domain in $(echo "$UB_LIST_PRIVATE" | openssl enc -a -d) ; do
         # Except and accept domains without (DNSSEC); work around broken domains
         echo "  private-domain: $domain"
       done
@@ -402,7 +402,7 @@ unbound_include() {
   if [ -n "$UB_CUSTOM_SERVER_CONFIG" ]; then
     {
       echo "# Begin Server custom config from WebUI"
-      echo "$UB_CUSTOM_SERVER_CONFIG" | /opt/bin/base64 -d
+      echo "$UB_CUSTOM_SERVER_CONFIG" | openssl enc -a -d
       echo
       echo "# End Server custom config from WebUI"
     } >> $UB_TOTAL_CONF
@@ -425,7 +425,7 @@ unbound_include() {
   if [ -n "$UB_CUSTOM_EXTEND_CONFIG" ]; then
     {
       echo "# Begin Extended custom config from WebUI"
-      echo "$UB_CUSTOM_EXTEND_CONFIG" | /opt/bin/base64 -d
+      echo "$UB_CUSTOM_EXTEND_CONFIG" | openssl enc -a -d
       echo
       echo "# End Extended custom config from WebUI"
     } >> $UB_TOTAL_CONF
@@ -564,7 +564,7 @@ install_unboundui() {
     echo "Installing Unbound from Entware..."
     if [ -f /opt/bin/opkg ]; then
       opkg update
-      opkg install unbound-daemon unbound-anchor unbound-checkconf unbound-control coreutils-base64 || return 1
+      opkg install unbound-daemon unbound-anchor unbound-checkconf unbound-control || return 1
     else
       echo "Entware not installed. Please install via AMTM."
       return 1
