@@ -19,20 +19,16 @@
     <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
     <script language="JavaScript" type="text/javascript" src="/help.js"></script>
     <script language="JavaScript" type="text/javascript" src="/tmmenu.js"></script>
+    <script language="JavaScript" type="text/javascript" src="/base64.js"></script>
     <script>
     (function() {
       if ( <% nvram_get("buildno"); %> == "374.43" )
       {
-      // Not sure why new jquery.js breaks the page, but not using it so far.
-      // document.write('<script src="/jquery.js"><\/script>');
-      document.write('<script src="/user/base64.js"><\/script>');
       document.write('<script src="/detect.js"><\/script>');
     	}
     	else
       {
       document.write('<script src="/validator.js"><\/script>');
-    	document.write('<script src="/js/jquery.js"><\/script>');
-      document.write('<script src="base64.js"><\/script>');
     	}
     }
     )();

@@ -466,12 +466,12 @@ unbound_mountui() {
   # Does the firmware support addons?
   if ! nvram get rc_support | grep -q am_addons;
   then
-      logger "Unbound-UI" "This firmware does not support addons!"
+      logger -t "Unbound-UI" "This firmware does not support addons!"
       exit 5
   fi
 
   if [ ! -f $UB_ADDON_DIR/Unbound.asp ]; then
-    logger "Unbound-UI" "WebUI files missing!"
+    logger -t "Unbound-UI" "WebUI files missing!"
     exit 5
   fi
 
@@ -480,61 +480,97 @@ unbound_mountui() {
 
   if [ "$am_webui_page" = "none" ]
   then
-      logger "Unbound-UI" "Unable to install Unbound-UI"
+      logger -t "Unbound-UI" "Unable to install Unbound-UI"
       exit 5
   fi
-  logger "Unbound-UI" "Mounting Unbound-UI as $am_webui_page"
+  logger -t "Unbound-UI" "Mounting Unbound-UI as $am_webui_page"
 
   # Copy custom page
   cp $UB_ADDON_DIR/Unbound.asp /www/user/"$am_webui_page"
 
-  # Copy menuTree (if no other script has done it yet) so we can modify it
-  if [ ! -f /tmp/menuTree.js ]
-  then
-      cp /www/require/modules/menuTree.js /tmp/
+  if [ "$(uname -o)" = "ASUSWRT-Merlin-LTS" ]; then
+    # John's fork
+    # Copy state.js (if no other script has done it yet) so we can modify it
+    if [ ! -f /tmp/state.js ]
+    then
+        cp /www/state.js /tmp/
+        mount -o bind /tmp/state.js /www/state.js
+    fi
+
+    if ! /bin/grep "^tablink.*\"$am_webui_page\"" /tmp/state.js >/dev/null 2>&1; then
+      # Insert link at the end of the Tools menu.  Match partial string, since tabname can change between builds (if using an AS tag)
+      sed -i "s/\(^tabtitle\[12\].*\)\([\).*$]\)/\1, \"Unbound\"\2/" /tmp/state.js
+      sed -i "s/\(^tablink\[12\].*\)\([\).*$]\)/\1, \"$am_webui_page\"\2/" /tmp/state.js
+      # sed and binding mounts don't work well together, so remount modified file
+      umount /www/state.js 2>/dev/null
+      mount -o bind /tmp/state.js /www/state.js
+    fi
+  else
+    # Merlin
+    # Copy menuTree (if no other script has done it yet) so we can modify it
+    if [ ! -f /tmp/menuTree.js ]
+    then
+        cp /www/require/modules/menuTree.js /tmp/
+        mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
+    fi
+
+    if ! /bin/grep "{url: \"$am_webui_page\", tabName: \"Unbound\"}," /tmp/menuTree.js >/dev/null 2>&1; then
+      # Insert link at the end of the Tools menu.  Match partial string, since tabname can change between builds (if using an AS tag)
+      sed -i "/url: \"Tools_OtherSettings.asp\", tabName:/a {url: \"$am_webui_page\", tabName: \"Unbound\"}," /tmp/menuTree.js
+      # sed and binding mounts don't work well together, so remount modified file
+      umount /www/require/modules/menuTree.js 2>/dev/null
       mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
+    fi
   fi
 
-  if ! /bin/grep "{url: \"$am_webui_page\", tabName: \"Unbound\"}," /tmp/menuTree.js >/dev/null 2>&1; then
-    # Insert link at the end of the Tools menu.  Match partial string, since tabname can change between builds (if using an AS tag)
-    sed -i "/url: \"Tools_OtherSettings.asp\", tabName:/a {url: \"$am_webui_page\", tabName: \"Unbound\"}," /tmp/menuTree.js
-    # sed and binding mounts don't work well together, so remount modified file
-    umount /www/require/modules/menuTree.js 2>/dev/null
-    mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
-  fi
 }
 
 unbound_unmountui() {
 
-  # Remove unbound tab from menu. TODO - don't also delete Unbound stats page
-  sed -i "\~tabName: \"Unbound\"},~d" /tmp/menuTree.js
-  umount /www/require/modules/menuTree.js 2>/dev/null
-  if diff /tmp/menuTree.js /www/require/modules/menuTree.js; then
-    rm /tmp/menuTree.js
-  else
-    # Still some modifications from another script so remount
-    mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
-  fi
-
   # Does the firmware support addons?
   if ! nvram get rc_support | grep -q am_addons;
   then
-      logger "Unbound-UI" "This firmware does not support addons!"
+      logger -t "Unbound-UI" "This firmware does not support addons!"
       exit 5
-  fi
-
-  if [ ! -f $UB_ADDON_DIR/Unbound.asp ]; then
-    logger "Unbound-UI" "WebUI files missing!"
-    exit 5
   fi
 
   am_get_webui_page $UB_ADDON_DIR/Unbound.asp
 
+  if [ "$(uname -o)" = "ASUSWRT-Merlin-LTS" ]; then
+    # John's fork
+    # Remove unbound tab from menu. TODO - don't also delete Unbound stats page
+    sed -i "s/\(^tabtitle\[12\].*\)\(, \"Unbound\"\)\(.*$\)/\1\3/" /tmp/state.js
+    sed -i "s/\(^tablink\[12\].*\)\(, \"$am_webui_page\"\)\(.*$\)/\1\3/" /tmp/state.js
+    umount /www/state.js 2>/dev/null
+    if diff /tmp/state.js /www/state.js; then
+      rm /tmp/state.js
+    else
+      # Still some modifications from another script so remount
+      mount -o bind /tmp/state.js /www/state.js
+    fi
+  else
+    # Merlin
+    # Remove unbound tab from menu. TODO - don't also delete Unbound stats page
+    sed -i "\~tabName: \"Unbound\"},~d" /tmp/menuTree.js
+    umount /www/require/modules/menuTree.js 2>/dev/null
+    if diff /tmp/menuTree.js /www/require/modules/menuTree.js; then
+      rm /tmp/menuTree.js
+    else
+      # Still some modifications from another script so remount
+      mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
+    fi
+  fi
+
+  if [ ! -f $UB_ADDON_DIR/Unbound.asp ]; then
+    logger -t "Unbound-UI" "WebUI files missing!"
+    exit 5
+  fi
+
   if [ "$am_webui_page" = "none" ]
   then
-      logger "Unbound-UI" "Unmount: web page not present"
+      logger -t "Unbound-UI" "Unmount: web page not present"
   elif [ -f /www/user/"$am_webui_page" ]; then
-      rm /www/user/"$am_webui_page" && logger "Unbound-UI" "Unmount: page removed"
+      rm /www/user/"$am_webui_page" && logger -t "Unbound-UI" "Unmount: page removed"
   fi
   for i in $(/bin/grep -l UnboundUI-by-dave14305 /www/user/user*.asp 2>/dev/null)
   do
@@ -641,6 +677,9 @@ install_unboundui() {
     sed -i '\~# Unbound-UI Addition~d' /jffs/scripts/dnsmasq.postconf
     echo "$cmdline" >> /jffs/scripts/dnsmasq.postconf
   fi
+
+# TODO: implement parameter handling in /opt/etc/init.d/S61unbound whether Unbound is enabled or disabled in UI
+#       backup and rewrite S61unbound
 
   echo "Enabling Unbound UI..."
   sh $MyAddonDir/unbound_service.sh mountui
