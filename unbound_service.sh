@@ -45,6 +45,7 @@ UB_TLS_ETC_FILE=/etc/ssl/certs/ca-certificates.crt
 # start files
 UB_RKEY_FILE=$UB_VARDIR/root.key
 UB_RHINT_FILE=$UB_VARDIR/root.hints
+UB_INIT_FILE=/opt/etc/init.d/S61unbound
 
 # helper apps
 UB_ANCHOR=$UB_BINDIR/unbound-anchor
@@ -678,13 +679,42 @@ install_unboundui() {
     echo "$cmdline" >> /jffs/scripts/dnsmasq.postconf
   fi
 
-# TODO: implement parameter handling in /opt/etc/init.d/S61unbound whether Unbound is enabled or disabled in UI
-#       backup and rewrite S61unbound
+  if [ -f "$UB_INIT_FILE" ] && [ ! -f "/opt/etc/init.d/back.S61unbound" ]; then
+    cp -p "$UB_INIT_FILE" "/opt/etc/init.d/back.S61unbound"
+  fi
+  {
+    echo "#!/bin/sh"
+    echo ""
+    echo "logger -t Unbound-UI \"Sending $1 command to Unbound via $0\""
+    echo "export TZ=$(cat /etc/TZ)"
+
+    if [ "$UB_B_ENABLED" = "0" ]; then
+      echo "ENABLED=no"
+    else
+      echo "ENABLED=yes"
+    fi
+    echo "PROCS=unbound"
+    echo "ARGS=\"-c $UB_TOTAL_CONF\""
+    echo "PREARGS=\"nohup\""
+    echo "PRECMD=\"\""
+    echo "POSTCMD=\"service restart_dnsmasq\""
+    echo "DESC=\$PROCS"
+    echo "PATH=/opt/sbin:/opt/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    echo ""
+    echo ". /opt/etc/init.d/rc.func"
+    echo ""
+    echo "# if time is not synced, allow NTP server names to pass without DNSSEC validation"
+    echo "if [ -n \"\$(pidof unbound)\" ] && [ \"\$(nvram get ntp_ready)\" != \"1\" ]; then"
+    echo "  [ -n \"\$(nvram get ntp_server0)\" ] && $UB_CONTROL insecure_add \"\$(nvram get ntp_server0)\""
+    echo "  [ -n \"\$(nvram get ntp_server1)\" ] && $UB_CONTROL insecure_add \"\$(nvram get ntp_server1)\""
+    echo "fi"
+  } > $UB_INIT_FILE
 
   echo "Enabling Unbound UI..."
   sh $MyAddonDir/unbound_service.sh mountui
 
 }
+
 # main
 if [ "$#" -ge "1" ]; then
   # get configuration options from Merlin API
