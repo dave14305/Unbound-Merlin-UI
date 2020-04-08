@@ -441,7 +441,7 @@ unbound_include() {
 }
 
 generate_conf() {
-  logger -t unbound "Configuring Unbound..."
+  logger -t "Unbound-UI" "Configuring Unbound..."
   cp -p "$UB_TOTAL_CONF" "$UB_TOTAL_CONF".keep
   # create necessary directories and files
   unbound_mkdir
@@ -454,9 +454,9 @@ generate_conf() {
   [ -f /jffs/scripts/unbound.postconf ] && sh $UB_ADDON_DIR/unbound.postconf "$UB_TOTAL_CONF"
   # check final configuration file for errors, log results in syslog
   if $UB_CHECKCONF "$UB_TOTAL_CONF" 1>/dev/null 2>&1; then
-    logger -t unbound "Unbound Configuration complete."
+    logger -t "Unbound-UI" "Unbound Configuration complete."
   else
-    logger -t unbound "Unbound Configuration errors. Reverting to previous config."
+    logger -t "Unbound-UI" "Unbound Configuration errors. Reverting to previous config."
     cp -p "$UB_TOTAL_CONF" "$UB_TOTAL_CONF".bad
     mv -f "$UB_TOTAL_CONF".keep "$UB_TOTAL_CONF"
   fi
@@ -722,7 +722,7 @@ if [ "$#" -ge "1" ]; then
       install_unboundui
       ;;
     *)
-      logger -t unbound "Unrecognized service handler $*"
+      logger -t "Unbound-UI" "Unrecognized service handler $*"
       ;;
   esac
 else
