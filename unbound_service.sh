@@ -688,14 +688,14 @@ install_unboundui() {
   {
     echo "#!/bin/sh"
     echo ""
-    echo "logger -t Unbound-UI \"Sending $1 command to Unbound via $0\""
-    echo "export TZ=$(cat /etc/TZ)"
-
-    if [ "$UB_B_ENABLED" = "0" ]; then
-      echo "ENABLED=no"
-    else
-      echo "ENABLED=yes"
-    fi
+    echo ". /usr/sbin/helper.sh"
+    echo "logger -t Unbound-UI \"Sending \$1 command to Unbound via \$0\""
+    echo "export TZ=\$(cat /etc/TZ)"
+    echo "if [ \"\$(am_settings_get unbound_enable)\" = \"0\" ]; then"
+    echo "  ENABLED=no"
+    echo "else"
+    echo "  ENABLED=yes"
+    echo "fi"
     echo "PROCS=unbound"
     echo "ARGS=\"-c $UB_TOTAL_CONF\""
     echo "PREARGS=\"nohup\""
@@ -716,7 +716,7 @@ install_unboundui() {
   echo "Enabling Unbound UI..."
   sh $MyAddonDir/unbound_service.sh mountui
   [ -n "$(pidof unbound)" ] && $UB_INIT_FILE start
-  
+
 }
 
 # main
