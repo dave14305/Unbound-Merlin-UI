@@ -445,7 +445,9 @@ unbound_include() {
 
 generate_conf() {
   logger -t "Unbound-UI" "Configuring Unbound..."
-  cp -p "$UB_TOTAL_CONF" "$UB_TOTAL_CONF".keep
+  if [ -f "$UB_TOTAL_CONF" ]; then
+    cp -p "$UB_TOTAL_CONF" "$UB_TOTAL_CONF".keep
+  fi
   # create necessary directories and files
   unbound_mkdir
   # server:
@@ -715,7 +717,7 @@ install_unboundui() {
 
   echo "Enabling Unbound UI..."
   sh $UB_ADDON_DIR/unbound_service.sh mountui
-  sh $UB_ADDON_DIR/unbound_service.sh restart
+  service restart_unbound
   service restart_dnsmasq
 }
 
