@@ -52,7 +52,7 @@
             if (hintid == 5) hinttext = "Allow these domains to fail DNSSEC validation, e.g. before the clock is synced.";
             if (hintid == 7) hinttext = "Select the desination for Unbound log output. If using logging level greater than 1, use a logfile.";
             if (hintid == 8) hinttext = "The verbosity number, level 0 means no verbosity, only errors. Level 1 gives operational information. Level 2 gives detailed operational information. Level 3 gives query level information, output per query. Level 4 gives algorithm level information. Level 5 logs client identification for cache misses.";
-            if (hintid == 9) hinttext = "Enable extra log details for queries and SERVFAIL messages.";
+            if (hintid == 9) hinttext = "Enable extra log details for queries (log-tag-queryreply) and upstream failures (log-servfail).";
             if (hintid == 10) hinttext = "Write statistics to the chosen log destination every X minutes. Zero to disable. Maximum 1440 (24 hours). 60 is typical.";
             if (hintid == 11) hinttext = "Enable more detailed statistics collection, viewable in unbound-control stats.";
             if (hintid == 12) hinttext = "Number of bytes size to advertise as the EDNS reassembly buffer size. This is the value put into datagrams over UDP towards peers. Default is 4096 which is RFC recommended. If you have fragmentation reassembly problems, usually seen as timeouts, then a value of 1472 can fix it.";
