@@ -353,7 +353,7 @@ unbound_conf() {
 
 unbound_uci() {
 
-  UB_B_ENABLED="$(am_settings_get unbound_enable)"; [ -z "$UB_B_ENABLED" ] && UB_B_ENABLED=0
+  UB_B_ENABLED="$(am_settings_get unbound_enable)"; [ -z "$UB_B_ENABLED" ] && UB_B_ENABLED=1
   UB_B_DNSSEC=$(nvram get dnssec_enable); [ -z "$UB_B_DNSSEC" ] && UB_B_DNSSEC=1
   UB_D_LOGDEST=$(am_settings_get unbound_logdest); [ -z "$UB_D_LOGDEST" ] && UB_D_LOGDEST=syslog
   UB_D_LOGEXTRA=$(am_settings_get unbound_logextra); [ -z "$UB_D_LOGEXTRA" ] && UB_D_LOGEXTRA=0

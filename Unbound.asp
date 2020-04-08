@@ -84,7 +84,7 @@
                 document.getElementById("unbound_status").innerHTML = "Status: Stopped";
 
             if (custom_settings.unbound_enable == undefined)
-                document.form.unbound_enable.value = "0";
+                document.form.unbound_enable.value = "1";
             else
                 document.form.unbound_enable.value = custom_settings.unbound_enable;
 
