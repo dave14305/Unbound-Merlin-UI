@@ -260,12 +260,14 @@ unbound_conf() {
     echo
   }  >> "$UB_CORE_CONF"
 
+  {
   # Some query privacy but "strict" will break some servers
   if [ "$UB_B_QUERY_MIN" -gt 0 ] ; then
     echo "  qname-minimisation: yes"
   else
     echo "  qname-minimisation: no"
   fi
+  } >> "$UB_CORE_CONF"
 
   case "$UB_D_RECURSION" in
     passive)
@@ -729,8 +731,11 @@ if [ "$#" -ge "1" ]; then
         restart_action="reload"
       fi
       generate_conf
-      if [ "$restart_action" = "restart" ]; then
-          # requires a hard stop for port change or disabling
+      if [ "$restart_action" = "reload" ]; then
+        # Minor config changes handled by a reload
+        $UB_CONTROL reload
+      else
+        # requires a hard stop for port change or disabling
         if [ -n "$(pidof unbound)" ]; then
           # Unbound is already running
           $UB_CONTROL stop
@@ -739,9 +744,6 @@ if [ "$#" -ge "1" ]; then
           # only start it again if it's enabled in the GUI
           $UB_CONTROL start
         fi
-      else
-        # Minor config changes handled by a reload
-        $UB_CONTROL reload
       fi
       ;;
     mountui)
