@@ -544,6 +544,7 @@ unbound_unmountui() {
     # Remove unbound tab from menu. TODO - don't also delete Unbound stats page
     sed -i "s/\(^tabtitle\[12\].*\)\(, \"Unbound\"\)\(.*$\)/\1\3/" /tmp/state.js
     sed -i "s/\(^tablink\[12\].*\)\(, \"$am_webui_page\"\)\(.*$\)/\1\3/" /tmp/state.js
+    sed -i "\~Unbound-UI Addition~d" /tmp/state.js
     umount /www/state.js 2>/dev/null
     if diff /tmp/state.js /www/state.js; then
       rm /tmp/state.js
