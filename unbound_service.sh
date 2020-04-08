@@ -691,23 +691,24 @@ if [ "$#" -ge "1" ]; then
   unbound_uci
   case "$1" in
     restart)
-      if [ "$UB_N_RX_PORT" != "$($UB_CHECKCONF -o port)" ]; then
-        restart_action="restart"
+      if [ "$UB_B_ENABLED" = "1" ] && [ "$UB_N_RX_PORT" = "$($UB_CHECKCONF -o port)" ]; then
+        restart_action="reload"
       fi
       generate_conf
-      if [ -n "$(pidof unbound)" ]; then
-        if [ "$restart_action" = "restart" ]; then
+      if [ "$restart_action" = "restart" ]; then
+          # requires a hard stop for port change or disabling
+        if [ -n "$(pidof unbound)" ]; then
+          # Unbound is already running
           $UB_CONTROL stop
+        fi
+        if [ "$UB_B_ENABLED" = "1" ]; then
+          # only start it again if it's enabled in the GUI
           $UB_CONTROL start
-        else
-          $UB_CONTROL reload
         fi
       else
-        $UB_CONTROL start
+        # Minor config changes handled by a reload
+        $UB_CONTROL reload
       fi
-      ;;
-    stop)
-      $UB_CONTROL stop
       ;;
     mountui)
       unbound_mountui

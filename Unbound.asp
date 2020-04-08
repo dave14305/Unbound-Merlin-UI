@@ -208,9 +208,15 @@
                 return false;
             }
 
+            if ( document.form.unbound_enable.value != custom_settings.unbound_enable ||
+                 document.getElementById('unbound_listen_port').value != custom_settings.unbound_listen_port
+               )
+                document.form.action_script.value += ";restart_dnsmasq";
+
             if (document.form.unbound_enable.value == "0") {
                 document.form.action_script.value = "stop_unbound;restart_dnsmasq";
             }
+            
             /* Retrieve value from input fields, and store in object */
             custom_settings.unbound_enable = document.form.unbound_enable.value;
             custom_settings.unbound_logdest = document.form.unbound_logdest.value;
@@ -254,7 +260,7 @@
         <input type="hidden" name="preferred_lang" id="preferred_lang" value="<% nvram_get(" preferred_lang "); %>">
         <input type="hidden" name="firmver" value="<% nvram_get(" firmver "); %>">
         <input type="hidden" name="amng_custom" id="amng_custom" value="">
-        <input type="hidden" name="action_script" value="restart_unbound;restart_dnsmasq">
+        <input type="hidden" name="action_script" value="restart_unbound">
 
         <table class="content" align="center" cellpadding="0" cellspacing="0">
             <tr>
