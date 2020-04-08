@@ -600,8 +600,6 @@ dnsmasq_postconf() {
 }
 
 install_unboundui() {
-  MyAddonDir=/jffs/addons/unboundui
-
   install_unbound() {
     echo "Installing Unbound from Entware..."
     if [ -f /opt/bin/opkg ]; then
@@ -623,15 +621,15 @@ install_unboundui() {
     fi
   fi
 
-  if [ ! -d $MyAddonDir ]; then
-    mkdir -p $MyAddonDir && chmod 755 $MyAddonDir
+  if [ ! -d $UB_ADDON_DIR ]; then
+    mkdir -p $UB_ADDON_DIR && chmod 755 $UB_ADDON_DIR
   fi
 
-  curl -o $MyAddonDir/Unbound.asp https://raw.githubusercontent.com/dave14305/Unbound-Merlin-UI/master/Unbound.asp
-  curl -o $MyAddonDir/unbound_service.sh https://raw.githubusercontent.com/dave14305/Unbound-Merlin-UI/master/unbound_service.sh
+  curl -o $UB_ADDON_DIR/Unbound.asp https://raw.githubusercontent.com/dave14305/Unbound-Merlin-UI/master/Unbound.asp
+  curl -o $UB_ADDON_DIR/unbound_service.sh https://raw.githubusercontent.com/dave14305/Unbound-Merlin-UI/master/unbound_service.sh
 
-  if [ -f $MyAddonDir/unbound_service.sh ]; then
-    chmod 755 $MyAddonDir/unbound_service.sh
+  if [ -f $UB_ADDON_DIR/unbound_service.sh ]; then
+    chmod 755 $UB_ADDON_DIR/unbound_service.sh
   else
     echo "Error downloading service script!"
     exit 5
@@ -648,8 +646,8 @@ install_unboundui() {
   if [ ! -x "/jffs/scripts/service-event" ]; then
     chmod 755 /jffs/scripts/service-event
   fi
-  if ! grep -vE "^#" /jffs/scripts/service-event | grep -qF "sh $MyAddonDir/unbound_service.sh"; then
-    cmdline="if [ \"\$2\" = \"unbound\" ]; then sh $MyAddonDir/unbound_service.sh \"\$1\" ; fi # Unbound-UI Addition"
+  if ! grep -vE "^#" /jffs/scripts/service-event | grep -qF "sh $UB_ADDON_DIR/unbound_service.sh"; then
+    cmdline="if [ \"\$2\" = \"unbound\" ]; then sh $UB_ADDON_DIR/unbound_service.sh \"\$1\" ; fi # Unbound-UI Addition"
     sed -i '\~# Unbound-UI Addition~d' /jffs/scripts/service-event
     echo "$cmdline" >> /jffs/scripts/service-event
   fi
@@ -663,8 +661,8 @@ install_unboundui() {
   if [ ! -x "/jffs/scripts/services-start" ]; then
     chmod 755 /jffs/scripts/services-start
   fi
-  if ! grep -vE "^#" /jffs/scripts/services-start | grep -qF "sh $MyAddonDir/unbound_service.sh"; then
-    cmdline="sh $MyAddonDir/unbound_service.sh mountui # Unbound-UI Addition"
+  if ! grep -vE "^#" /jffs/scripts/services-start | grep -qF "sh $UB_ADDON_DIR/unbound_service.sh"; then
+    cmdline="sh $UB_ADDON_DIR/unbound_service.sh mountui # Unbound-UI Addition"
     sed -i '\~# Unbound-UI Addition~d' /jffs/scripts/services-start
     echo "$cmdline" >> /jffs/scripts/services-start
   fi
@@ -678,8 +676,8 @@ install_unboundui() {
   if [ ! -x "/jffs/scripts/dnsmasq.postconf" ]; then
     chmod 755 /jffs/scripts/dnsmasq.postconf
   fi
-  if ! grep -vE "^#" /jffs/scripts/dnsmasq.postconf | grep -qF "sh $MyAddonDir/unbound_service.sh"; then
-    cmdline="sh $MyAddonDir/unbound_service.sh dnsmasq_postconf \"\$1\" # Unbound-UI Addition"
+  if ! grep -vE "^#" /jffs/scripts/dnsmasq.postconf | grep -qF "sh $UB_ADDON_DIR/unbound_service.sh"; then
+    cmdline="sh $UB_ADDON_DIR/unbound_service.sh dnsmasq_postconf \"\$1\" # Unbound-UI Addition"
     sed -i '\~# Unbound-UI Addition~d' /jffs/scripts/dnsmasq.postconf
     echo "$cmdline" >> /jffs/scripts/dnsmasq.postconf
   fi
@@ -716,9 +714,38 @@ install_unboundui() {
   } > $UB_INIT_FILE
 
   echo "Enabling Unbound UI..."
-  sh $MyAddonDir/unbound_service.sh mountui
+  sh $UB_ADDON_DIR/unbound_service.sh mountui
   [ -n "$(pidof unbound)" ] && $UB_INIT_FILE start
+}
 
+uninstall_unboundui() {
+  echo "Uninstalling Unbound UI..."
+  sh $UB_ADDON_DIR/unbound_service.sh unmountui
+  if [ -f "/opt/etc/init.d/back.S61unbound" ]; then
+    echo -n "Restoring original S61unbound init script..."
+    cp -p "/opt/etc/init.d/back.S61unbound" "$UB_INIT_FILE" && echo "done."
+  fi
+  echo -n "Removing custom script entries..."
+  sed -i '\~# Unbound-UI Addition~d' /jffs/scripts/service-event
+  sed -i '\~# Unbound-UI Addition~d' /jffs/scripts/services-start
+  sed -i '\~# Unbound-UI Addition~d' /jffs/scripts/dnsmasq.postconf
+  echo "done."
+  echo "Restarting dnsmasq..."
+  service restart_dnsmasq
+  echo -n "Removing Merlin addon custom settings..."
+  sed -i '\~^unbound_~d' /jffs/addons/custom_settings.txt && echo "done."
+  echo "Remove Entware Unbound installation? [Y/N]"
+  read -r "CONFIRM_REMOVE"
+  if [ "$CONFIRM_REMOVE" = "Y" ] || [ "$CONFIRM_REMOVE" = "y" ]; then
+    echo -n "Removing Entware unbound packages..."
+    opkg --autoremove remove unbound-anchor unbound-checkconf unbound-control unbound-daemon && echo "done."
+    echo -n "Removing Unbound configuration directory..."
+    rm -rf $UB_VARDIR && echo "done."
+  else
+    echo "Leaving Unbound installed."
+  fi
+  echo -n "Removing addons directory..."
+  rm -rf $UB_ADDON_DIR && echo "done."
 }
 
 # main
@@ -757,6 +784,9 @@ if [ "$#" -ge "1" ]; then
       ;;
     install)
       install_unboundui
+      ;;
+    uninstall)
+      uninstall_unboundui
       ;;
     *)
       logger -t "Unbound-UI" "Unrecognized service handler $*"
