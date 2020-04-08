@@ -715,7 +715,7 @@ install_unboundui() {
 
   echo "Enabling Unbound UI..."
   sh $UB_ADDON_DIR/unbound_service.sh mountui
-  [ -n "$(pidof unbound)" ] && $UB_INIT_FILE start
+  [ -z "$(pidof unbound)" ] && $UB_INIT_FILE start
 }
 
 uninstall_unboundui() {
