@@ -715,7 +715,7 @@ install_unboundui() {
 
   echo "Enabling Unbound UI..."
   sh $UB_ADDON_DIR/unbound_service.sh mountui
-  [ -z "$(pidof unbound)" ] && $UB_INIT_FILE start
+  [ -z "$(pidof unbound)" ] && { sh $UB_ADDON_DIR/unbound_service.sh start; service restart_dnsmasq }
 }
 
 uninstall_unboundui() {
