@@ -213,10 +213,6 @@
                )
                 document.form.action_script.value += ";restart_dnsmasq";
 
-            if (document.form.unbound_enable.value == "0") {
-                document.form.action_script.value = "stop_unbound;restart_dnsmasq";
-            }
-            
             /* Retrieve value from input fields, and store in object */
             custom_settings.unbound_enable = document.form.unbound_enable.value;
             custom_settings.unbound_logdest = document.form.unbound_logdest.value;
