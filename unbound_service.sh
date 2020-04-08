@@ -715,7 +715,8 @@ install_unboundui() {
 
   echo "Enabling Unbound UI..."
   sh $UB_ADDON_DIR/unbound_service.sh mountui
-  [ -z "$(pidof unbound)" ] && { sh $UB_ADDON_DIR/unbound_service.sh start; service restart_dnsmasq }
+  sh $UB_ADDON_DIR/unbound_service.sh restart
+  service restart_dnsmasq
 }
 
 uninstall_unboundui() {
@@ -737,6 +738,8 @@ uninstall_unboundui() {
   echo "Remove Entware Unbound installation? [Y/N]"
   read -r "CONFIRM_REMOVE"
   if [ "$CONFIRM_REMOVE" = "Y" ] || [ "$CONFIRM_REMOVE" = "y" ]; then
+    echo "Stopping Unbound..."
+    $UB_CONTROL stop
     echo -n "Removing Entware unbound packages..."
     opkg --autoremove remove unbound-anchor unbound-checkconf unbound-control unbound-daemon && echo "done."
     echo -n "Removing Unbound configuration directory..."
