@@ -25,16 +25,20 @@
       if ( <% nvram_get("buildno"); %> == "374.43" )
       {
       document.write('<script src="/detect.js"><\/script>');
+      document.write('<script src="/jquery.js"><\/script>');
     	}
     	else
       {
       document.write('<script src="/validator.js"><\/script>');
+      document.write('<script src="/js/jquery.js"><\/script>');
     	}
     }
     )();
     </script>
 
     <script>
+        var $j = jQuery.noConflict();
+
         var custom_settings = <% get_custom_settings(); %>;
 
         function YazHint(hintid) {
