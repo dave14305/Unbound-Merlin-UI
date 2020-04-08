@@ -495,6 +495,8 @@ unbound_mountui() {
     if [ ! -f /tmp/state.js ]
     then
         cp /www/state.js /tmp/
+        # fix left-menubar highlighting for Tools menu
+        sed -i "/^if(current_url.indexOf(\"cloud\") == 0)/i if(current_url.indexOf(\"user\") == 0)\t/\/\ Unbound-UI Addition\nL1 = 7;\t/\/\ Unbound-UI Addition" /tmp/state.js
         mount -o bind /tmp/state.js /www/state.js
     fi
 
