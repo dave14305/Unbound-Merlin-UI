@@ -495,23 +495,8 @@ unbound_mountui() {
 
   if [ "$(uname -o)" = "ASUSWRT-Merlin-LTS" ]; then
     # John's fork
-    # Copy state.js (if no other script has done it yet) so we can modify it
-    if [ ! -f /tmp/state.js ]
-    then
-        cp /www/state.js /tmp/
-        # fix left-menubar highlighting for Tools menu
-        sed -i "/^if(current_url.indexOf(\"cloud\") == 0)/i if(current_url.indexOf(\"user\") == 0)\t/\/\ Unbound-UI Addition\nL1 = 7;\t/\/\ Unbound-UI Addition" /tmp/state.js
-        mount -o bind /tmp/state.js /www/state.js
-    fi
-
-    if ! /bin/grep "^tablink.*\"$am_webui_page\"" /tmp/state.js >/dev/null 2>&1; then
-      # Insert link at the end of the Tools menu.  Match partial string, since tabname can change between builds (if using an AS tag)
-      sed -i "s/\(^tabtitle\[12\].*\)\([\).*$]\)/\1, \"Unbound\"\2/" /tmp/state.js
-      sed -i "s/\(^tablink\[12\].*\)\([\).*$]\)/\1, \"$am_webui_page\"\2/" /tmp/state.js
-      # sed and binding mounts don't work well together, so remount modified file
-      umount /www/state.js 2>/dev/null
-      mount -o bind /tmp/state.js /www/state.js
-    fi
+    MyPageTitle="$(echo $am_webui_page | sed 's~.asp~~g').title"
+    echo "Unbound" > "/www/user/$MyPageTitle"
   else
     # Merlin
     # Copy menuTree (if no other script has done it yet) so we can modify it
@@ -533,7 +518,6 @@ unbound_mountui() {
 }
 
 unbound_unmountui() {
-
   # Does the firmware support addons?
   if ! nvram get rc_support | grep -q am_addons;
   then
@@ -543,41 +527,25 @@ unbound_unmountui() {
 
   am_get_webui_page $UB_ADDON_DIR/Unbound.asp
 
-  if [ "$(uname -o)" = "ASUSWRT-Merlin-LTS" ]; then
-    # John's fork
-    # Remove unbound tab from menu. TODO - don't also delete Unbound stats page
-    sed -i "s/\(^tabtitle\[12\].*\)\(, \"Unbound\"\)\(.*$\)/\1\3/" /tmp/state.js
-    sed -i "s/\(^tablink\[12\].*\)\(, \"$am_webui_page\"\)\(.*$\)/\1\3/" /tmp/state.js
-    sed -i "\~Unbound-UI Addition~d" /tmp/state.js
-    umount /www/state.js 2>/dev/null
-    if diff /tmp/state.js /www/state.js; then
-      rm /tmp/state.js
-    else
-      # Still some modifications from another script so remount
-      mount -o bind /tmp/state.js /www/state.js
-    fi
+  if [ -n "$am_webui_page" ] && [ "$am_webui_page" != "none" ]; then
+    if [ -f /tmp/menuTree.js ]; then
+      # Merlin
+      # Remove unbound tab from menu. TODO - don't also delete Unbound stats page
+      sed -i "\~tabName: \"Unbound\"},~d" /tmp/menuTree.js
+      umount /www/require/modules/menuTree.js 2>/dev/null
+      if diff /tmp/menuTree.js /www/require/modules/menuTree.js; then
+        rm /tmp/menuTree.js
+      else
+        # Still some modifications from another script so remount
+        mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
+      fi
   else
-    # Merlin
-    # Remove unbound tab from menu. TODO - don't also delete Unbound stats page
-    sed -i "\~tabName: \"Unbound\"},~d" /tmp/menuTree.js
-    umount /www/require/modules/menuTree.js 2>/dev/null
-    if diff /tmp/menuTree.js /www/require/modules/menuTree.js; then
-      rm /tmp/menuTree.js
-    else
-      # Still some modifications from another script so remount
-      mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
-    fi
+    # John's fork
+    MyPageTitle="$(echo $am_webui_page | sed 's~.asp~~g').title"
+    rm -rf "/www/user/$MyPageTitle"
   fi
 
-  if [ ! -f $UB_ADDON_DIR/Unbound.asp ]; then
-    logger -t "Unbound-UI" "WebUI files missing!"
-    exit 5
-  fi
-
-  if [ "$am_webui_page" = "none" ]
-  then
-      logger -t "Unbound-UI" "Unmount: web page not present"
-  elif [ -f /www/user/"$am_webui_page" ]; then
+  if [ -f /www/user/"$am_webui_page" ]; then
       rm /www/user/"$am_webui_page" && logger -t "Unbound-UI" "Unmount: page removed"
   fi
   for i in $(/bin/grep -l UnboundUI-by-dave14305 /www/user/user*.asp 2>/dev/null)
