@@ -539,20 +539,19 @@ unbound_unmountui() {
         # Still some modifications from another script so remount
         mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
       fi
-  else
-    # John's fork
-    MyPageTitle="$(echo $am_webui_page | sed 's~.asp~~g').title"
-    rm -rf "/www/user/$MyPageTitle"
-  fi
-
-  if [ -f /www/user/"$am_webui_page" ]; then
-      rm /www/user/"$am_webui_page" && logger -t "Unbound-UI" "Unmount: page removed"
+    else
+      # John's fork
+      MyPageTitle="$(echo $am_webui_page | sed 's~.asp~~g').title"
+      rm -rf "/www/user/$MyPageTitle"
+    fi
+    if [ -f /www/user/"$am_webui_page" ]; then
+        rm /www/user/"$am_webui_page" && logger -t "Unbound-UI" "Unmount: page removed"
+    fi
   fi
   for i in $(/bin/grep -l UnboundUI-by-dave14305 /www/user/user*.asp 2>/dev/null)
   do
     rm "$i"
   done
-
 }
 
 dnsmasq_postconf() {
