@@ -18,27 +18,12 @@
     <script language="JavaScript" type="text/javascript" src="/general.js"></script>
     <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
     <script language="JavaScript" type="text/javascript" src="/help.js"></script>
+    <script language="JavaScript" type="text/javascript" src="/detect.js"></script> // for John's fork, not present on Merlin
+    <script language="JavaScript" type="text/javascript" src="/validator.js"></script> // for Merlin, not present on John's fork
     <script language="JavaScript" type="text/javascript" src="/tmmenu.js"></script>
     <script language="JavaScript" type="text/javascript" src="/base64.js"></script>
-    <script>
-    (function() {
-      if ( <% nvram_get("buildno"); %> == "374.43" )
-      {
-      document.write('<script src="/detect.js"><\/script>');
-      document.write('<script src="/jquery.js"><\/script>');
-    	}
-    	else
-      {
-      document.write('<script src="/validator.js"><\/script>');
-      document.write('<script src="/js/jquery.js"><\/script>');
-    	}
-    }
-    )();
-    </script>
 
     <script>
-        var $j = jQuery.noConflict();
-
         var custom_settings = <% get_custom_settings(); %>;
 
         function YazHint(hintid) {
@@ -74,6 +59,7 @@
         function initial() {
             show_menu();
             SetCurrentPage();
+            firmwarebuild = (<% nvram_get("buildno"); %>);
             unbound_state = (<% sysinfo("pid.unbound"); %> > 0 ? 1 : 0);
             dnssecenabled = (<% nvram_get("dnssec_enable"); %>);
             dnsrebindenabled = (<% nvram_get("dns_norebind"); %>);
@@ -175,7 +161,7 @@
         }
 
         function applySettings() {
-            if ( <% nvram_get("buildno"); %> == "374.43" )
+            if ( firmwarebuild == "374.43" )
             {
               if (!validate_range(document.form.unbound_listen_port, 1, 65535)){
                 document.form.unbound_listen_port.focus();
