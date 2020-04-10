@@ -18,8 +18,8 @@
     <script language="JavaScript" type="text/javascript" src="/general.js"></script>
     <script language="JavaScript" type="text/javascript" src="/popup.js"></script>
     <script language="JavaScript" type="text/javascript" src="/help.js"></script>
-    <script language="JavaScript" type="text/javascript" src="/detect.js"></script> // for John's fork, not present on Merlin
-    <script language="JavaScript" type="text/javascript" src="/validator.js"></script> // for Merlin, not present on John's fork
+    <script language="JavaScript" type="text/javascript" src="/detect.js"></script>
+    <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
     <script language="JavaScript" type="text/javascript" src="/tmmenu.js"></script>
     <script language="JavaScript" type="text/javascript" src="/base64.js"></script>
 
