@@ -10,5 +10,5 @@ ASUSWRT-Merlin Unbound User Interface
 
 ## Installation
 ```Shell
-/usr/sbin/curl -s "https://raw.githubusercontent.com/dave14305/Unbound-Merlin-UI/master/unbound_service.sh" -o "unbound_service.sh" && sh -x ./unbound_service.sh install
+/usr/sbin/curl -s "https://raw.githubusercontent.com/dave14305/Unbound-Merlin-UI/master/unbound_service.sh" -o $HOME/unbound_service.sh && sh $HOME/unbound_service.sh install
 ```
