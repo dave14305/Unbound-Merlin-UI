@@ -671,7 +671,7 @@ install_unboundui() {
     echo "PROCS=unbound"
     echo "ARGS=\"-c $UB_TOTAL_CONF\""
     echo "PREARGS=\"nohup\""
-    echo "PRECMD=\"\""
+    echo "PRECMD=\"$UB_ADDON_DIR/unbound_service.sh genconf\""
     echo "POSTCMD=\"service restart_dnsmasq\""
     echo "DESC=\$PROCS"
     echo "PATH=/opt/sbin:/opt/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
@@ -722,6 +722,9 @@ if [ "$#" -ge "1" ]; then
   # get configuration options from Merlin API
   unbound_uci
   case "$1" in
+    genconf)
+      generate_conf
+      ;;
     restart)
       if [ "$UB_B_ENABLED" = "1" ] && [ "$UB_N_RX_PORT" = "$($UB_CHECKCONF -o port)" ] && [ -n "$(pidof unbound)" ] && [ "$($UB_CHECKCONF -o val-override-date)" = "0" ]; then
         restart_action="reload"
