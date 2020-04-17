@@ -99,13 +99,6 @@ unbound_mkdir() {
   chmod 755 "$UB_VARDIR"
   chmod 644 "$UB_VARDIR"/*
 
-  # if [ "$(nvram get ntp_ready)" -eq "1" ] ; then
-  #   # NTP is done so its like you actually had an RTC
-  #   UB_B_NTP_BOOT=0
-  # else
-  #   # DNSSEC-TIME will not reconcile
-  #   UB_B_NTP_BOOT=1
-  # fi
 }
 
 ##############################################################################
@@ -251,6 +244,10 @@ unbound_conf() {
   modulestring="iterator"
 
   if [ "$UB_B_DNSSEC" -gt 0 ] ; then
+    if [ "$UB_B_NTP_SYNC" -eq 0 ] ; then
+      # DNSSEC chicken and egg with getting NTP time
+      echo "  val-override-date: -1" >> $UB_CORE_CONF
+    fi
     modulestring="validator $modulestring"
   fi
 
@@ -374,6 +371,7 @@ unbound_uci() {
   UB_CUSTOM_SERVER_CONFIG="$(am_settings_get unbound_custom_server)"
   UB_CUSTOM_EXTEND_CONFIG="$(am_settings_get unbound_custom_extend)"
   UB_D_STATSLOG=$(am_settings_get unbound_statslog); [ -z "$UB_D_STATSLOG" ] && UB_D_STATSLOG=0
+  UB_B_NTP_SYNC="$(nvram get ntp_ready)"
 
   if [ "$UB_N_EDNS_SIZE" -lt 512 ] || [ 4096 -lt "$UB_N_EDNS_SIZE" ] ; then
     UB_N_EDNS_SIZE=1280
