@@ -613,9 +613,14 @@ install_unboundui() {
   if [ ! -x "/jffs/scripts/service-event" ]; then
     chmod 755 /jffs/scripts/service-event
   fi
-  if ! grep -vE "^#" /jffs/scripts/service-event | grep -qF "sh $UB_ADDON_DIR/unbound_service.sh"; then
+  if ! grep -vE "^#" /jffs/scripts/service-event | grep -qE "unbound.*sh $UB_ADDON_DIR/unbound_service.sh"; then
     cmdline="if [ \"\$2\" = \"unbound\" ]; then sh $UB_ADDON_DIR/unbound_service.sh \"\$1\" ; fi # Unbound-UI Addition"
-    sed -i '\~# Unbound-UI Addition~d' /jffs/scripts/service-event
+    sed -i '\~\"unbound\".*# Unbound-UI Addition~d' /jffs/scripts/service-event
+    echo "$cmdline" >> /jffs/scripts/service-event
+  fi
+  if ! grep -vE "^#" /jffs/scripts/service-event | grep -qE "restart.*diskmon.*sh $UB_ADDON_DIR/unbound_service.sh"; then
+    cmdline="if [ \"\$1\" = \"restart\" ] && [ \"\$2\" = \"diskmon\" ]; then sh $UB_ADDON_DIR/unbound_service.sh restart\" ; fi # Unbound-UI Addition"
+    sed -i '\~\"diskmon\".*# Unbound-UI Addition~d' /jffs/scripts/service-event
     echo "$cmdline" >> /jffs/scripts/service-event
   fi
 
@@ -672,12 +677,6 @@ install_unboundui() {
     echo "PATH=/opt/sbin:/opt/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
     echo ""
     echo ". /opt/etc/init.d/rc.func"
-    echo ""
-    echo "# if time is not synced, allow NTP server names to pass without DNSSEC validation"
-    echo "if [ -n \"\$(pidof unbound)\" ] && [ \"\$(nvram get ntp_ready)\" != \"1\" ]; then"
-    echo "  [ -n \"\$(nvram get ntp_server0)\" ] && $UB_CONTROL insecure_add \"\$(nvram get ntp_server0)\""
-    echo "  [ -n \"\$(nvram get ntp_server1)\" ] && $UB_CONTROL insecure_add \"\$(nvram get ntp_server1)\""
-    echo "fi"
   } > $UB_INIT_FILE
 
   echo "Enabling Unbound UI..."
