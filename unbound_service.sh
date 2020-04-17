@@ -690,7 +690,7 @@ uninstall_unboundui() {
   sh $UB_ADDON_DIR/unbound_service.sh unmountui
   if [ -f "/opt/etc/init.d/back.S61unbound" ]; then
     echo -n "Restoring original S61unbound init script..."
-    cp -p "/opt/etc/init.d/back.S61unbound" "$UB_INIT_FILE" && echo "done."
+    mv -f "/opt/etc/init.d/back.S61unbound" "$UB_INIT_FILE" && echo "done."
   fi
   echo -n "Removing custom script entries..."
   sed -i '\~# Unbound-UI Addition~d' /jffs/scripts/service-event
