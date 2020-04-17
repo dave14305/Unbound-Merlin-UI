@@ -723,7 +723,7 @@ if [ "$#" -ge "1" ]; then
   unbound_uci
   case "$1" in
     restart)
-      if [ "$UB_B_ENABLED" = "1" ] && [ "$UB_N_RX_PORT" = "$($UB_CHECKCONF -o port)" ] && [ -n "$(pidof unbound)" ]; then
+      if [ "$UB_B_ENABLED" = "1" ] && [ "$UB_N_RX_PORT" = "$($UB_CHECKCONF -o port)" ] && [ -n "$(pidof unbound)" ] && [ "$($UB_CHECKCONF -o val-override-date)" = "0" ]; then
         restart_action="reload"
       fi
       generate_conf
