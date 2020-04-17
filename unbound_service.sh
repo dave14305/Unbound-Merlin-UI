@@ -619,7 +619,7 @@ install_unboundui() {
     echo "$cmdline" >> /jffs/scripts/service-event
   fi
   if ! grep -vE "^#" /jffs/scripts/service-event | grep -qE "restart.*diskmon.*sh $UB_ADDON_DIR/unbound_service.sh"; then
-    cmdline="if [ \"\$1\" = \"restart\" ] && [ \"\$2\" = \"diskmon\" ]; then sh $UB_ADDON_DIR/unbound_service.sh restart\" ; fi # Unbound-UI Addition"
+    cmdline="if [ \"\$1\" = \"restart\" ] && [ \"\$2\" = \"diskmon\" ]; then sh $UB_ADDON_DIR/unbound_service.sh restart ; fi # Unbound-UI Addition"
     sed -i '\~\"diskmon\".*# Unbound-UI Addition~d' /jffs/scripts/service-event
     echo "$cmdline" >> /jffs/scripts/service-event
   fi
