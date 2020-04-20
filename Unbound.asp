@@ -46,6 +46,7 @@
             if (hintid == 14) hinttext = "Unbound has many options for recursion: passive - slower until cache fills but kind on CPU load. default - Unbound built-in defaults. aggressive - uses prefetching to handle more requests quickly.";
             if (hintid == 15) hinttext = "Time to live minimum for RRsets and messages in the cache. If the minimum kicks in, the data is cached for longer than the domain owner intended, and thus fewer queries are made to lookup the data. Zero makes sure the data in the cache is as the domain owner intended. Higher values, especially more than an hour or so, can lead to trouble as the data in the cache does not match up with the actual data any more.";
             if (hintid == 16) hinttext = "Send minimum amount of information to upstream servers to enhance privacy.";
+            if (hintid == 17) hinttext = "Download and cache the root (.) zone for faster lookups.";
             if (hintid == 20) hinttext = "Allow these domains, and all their subdomains to contain private addresses. Give multiple times to allow multiple domain names to contain private addresses.";
             if (hintid == 23) hinttext = "Place unbound.conf options to add to the server: clause.";
             if (hintid == 24) hinttext = "Place unbound.conf options to add outside the server: clause (e.g. local-zone, stub-zone, remote-control, etc.)";
@@ -149,6 +150,11 @@
                 document.form.unbound_query_minimize.value = "1";
             else
                 document.form.unbound_query_minimize.value = custom_settings.unbound_query_minimize;
+
+            if (custom_settings.unbound_cache_root == undefined)
+                document.form.unbound_cache_root.value = "0";
+            else
+                document.form.unbound_cache_root.value = custom_settings.unbound_cache_root;
 
             if (custom_settings.unbound_ttl_min == undefined)
                 document.getElementById('unbound_ttl_min').value = "0";
@@ -255,6 +261,7 @@
             custom_settings.unbound_custom_server = Base64.encode(document.getElementById('unbound_custom_server').value);
             custom_settings.unbound_custom_extend = Base64.encode(document.getElementById('unbound_custom_extend').value);
             custom_settings.unbound_statslog = document.form.unbound_statslog.value;
+            custom_settings.unbound_cache_root = document.form.unbound_cache_root.value;
 
             /* Store object as a string in the amng_custom hidden input field */
             document.getElementById('amng_custom').value = JSON.stringify(custom_settings);
@@ -456,6 +463,13 @@
                                                     <td>
                                                         <input type="text" maxlength="4" class="input_6_table" id="unbound_ttl_min" onKeyPress="return validator.isNumber(this,event);" value="0">&nbsp;seconds
                                                         <span>Default: 0 Max: 1800</span>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(17);">Cache root zone</a></th>
+                                                    <td>
+                                                        <input type="radio" name="unbound_cache_root" class="input" value="1">Yes
+                                                        <input type="radio" name="unbound_cache_root" class="input" value="0">No
                                                     </td>
                                                 </tr>
                                                 <thead>

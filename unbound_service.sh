@@ -37,6 +37,7 @@ UB_CORE_CONF=$UB_VARDIR/server.conf.tmp
 UB_CTRL_CONF=$UB_VARDIR/ctrl.conf.tmp
 UB_SRV_CONF=$UB_VARDIR/unbound_srv.conf
 UB_EXT_CONF=$UB_VARDIR/unbound_ext.conf
+UB_ZONE_CONF=$UB_VARDIR/zone.conf.tmp
 
 # TLS keys
 UB_TLS_FWD_FILE=$UB_VARDIR/ca-certificates.crt
@@ -356,6 +357,43 @@ unbound_conf() {
   fi
 }
 
+unbound_zones() {
+  echo "# $UB_ZONE_CONF generated on $( date -Is )" > "$UB_ZONE_CONF"
+
+  if [ "$UB_B_CACHE_ROOT" -gt 0 ]; then
+    {
+      # Local Host Only Unencrypted Remote Control
+      echo "auth-zone:"
+      echo "  name: \".\""
+      echo "  url: \"https://www.internic.net/domain/root.zone\""
+      echo "  fallback-enabled: yes"
+      echo "  for-downstream: no"
+      echo "  for-upstream: yes"
+      echo "  zonefile: root.zone"
+      echo "  master: 199.9.14.201         # b.root-servers.net"
+      echo "  master: 192.33.4.12          # c.root-servers.net"
+      echo "  master: 199.7.91.13          # d.root-servers.net"
+      echo "  master: 192.5.5.241          # f.root-servers.net"
+      echo "  master: 192.112.36.4         # g.root-servers.net"
+      echo "  master: 193.0.14.129         # k.root-servers.net"
+      echo "  master: 192.0.47.132         # xfr.cjr.dns.icann.org"
+      echo "  master: 192.0.32.132         # xfr.lax.dns.icann.org"
+      if [ "$(nvram get ipv6_service)" != "disabled" ]; then
+      {
+        echo "  master: 2001:500:200::b      # b.root-servers.net"
+        echo "  master: 2001:500:2::c        # c.root-servers.net"
+        echo "  master: 2001:500:2d::d       # d.root-servers.net"
+        echo "  master: 2001:500:2f::f       # f.root-servers.net"
+        echo "  master: 2001:500:12::d0d     # g.root-servers.net"
+        echo "  master: 2001:7fd::1          # k.root-servers.net"
+        echo "  master: 2620:0:2830:202::132 # xfr.cjr.dns.icann.org"
+        echo "  master: 2620:0:2d0:202::132  # xfr.lax.dns.icann.org"
+      }
+      fi
+      echo
+    } >> "$UB_ZONE_CONF"
+  fi
+}
 ##############################################################################
 
 unbound_uci() {
@@ -381,6 +419,7 @@ unbound_uci() {
   UB_CUSTOM_EXTEND_CONFIG="$(am_settings_get unbound_custom_extend)"
   UB_D_STATSLOG=$(am_settings_get unbound_statslog); [ -z "$UB_D_STATSLOG" ] && UB_D_STATSLOG=0
   UB_B_NTP_SYNC="$(nvram get ntp_ready)"
+  UB_B_CACHE_ROOT=$(am_settings_get unbound_cache_root); [ -z "$UB_B_CACHE_ROOT" ] && UB_B_CACHE_ROOT=0
 
   if [ "$UB_N_EDNS_SIZE" -lt 512 ] || [ 4096 -lt "$UB_N_EDNS_SIZE" ] ; then
     UB_N_EDNS_SIZE=1280
@@ -426,6 +465,12 @@ unbound_include() {
     }>> "$UB_TOTAL_CONF"
   fi
 
+  if [ -f "$UB_ZONE_CONF" ] ; then
+    # UCI defined zones
+    cat "$UB_ZONE_CONF" >> "$UB_TOTAL_CONF"
+    rm  "$UB_ZONE_CONF"
+  fi
+
   if [ -f "$UB_CTRL_CONF" ] ; then
     # UCI defined control application connection
     cat "$UB_CTRL_CONF" >> "$UB_TOTAL_CONF"
@@ -459,6 +504,8 @@ generate_conf() {
   unbound_mkdir
   # server:
   unbound_conf
+  # zones
+  unbound_zones
   # control:
   unbound_control
   # merge
