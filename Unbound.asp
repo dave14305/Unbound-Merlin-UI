@@ -34,6 +34,7 @@
             hinttext = "Help text not yet defined";
             if (hintid == 1) hinttext = "Choose which IP protocol Unbound uses for external communication. Prefer IPv6 uses both IPv4 and IPv6 but gives preference to IPv6.";
             if (hintid == 2) hinttext = "UDP and TCP port that Unbound will listen on using the loopback interface. Avoid ports that are already in use by other services.";
+            if (hintid == 3) hinttext = "Choose specific outgoing interfaces, such as VPN client tunnels, to protect outbound DNS queries from snooping.";
             if (hintid == 5) hinttext = "Allow these domains to fail DNSSEC validation, e.g. before the clock is synced.";
             if (hintid == 7) hinttext = "Select the desination for Unbound log output. If using logging level greater than 1, use a logfile.";
             if (hintid == 8) hinttext = "The verbosity number, level 0 means no verbosity, only errors. Level 1 gives operational information. Level 2 gives detailed operational information. Level 3 gives query level information, output per query. Level 4 gives algorithm level information. Level 5 logs client identification for cache misses.";
@@ -56,6 +57,31 @@
             document.form.current_page.value = window.location.pathname.substring(1);
         }
 
+        function SetOutgoingInterfaceOptions() {
+          var retval = 0;
+          if ( "<% nvram_get("vpn_client1_state"); %>" == "1" ) {
+              add_option(document.form.unbound_outiface, "VPN Client 1", "vpnc1", custom_settings.unbound_outiface == "vpnc1");
+              retval = 1;
+          }
+          if ( "<% nvram_get("vpn_client2_state"); %>" == "1" ) {
+              add_option(document.form.unbound_outiface, "VPN Client 2", "vpnc2", custom_settings.unbound_outiface == "vpnc2");
+              retval = 1;
+          }
+          if ( "<% nvram_get("vpn_client3_state"); %>" == "1" ) {
+              add_option(document.form.unbound_outiface, "VPN Client 3", "vpnc3", custom_settings.unbound_outiface == "vpnc3");
+              retval = 1;
+          }
+          if ( "<% nvram_get("vpn_client4_state"); %>" == "1" ) {
+              add_option(document.form.unbound_outiface, "VPN Client 4", "vpnc4", custom_settings.unbound_outiface == "vpnc4");
+              retval = 1;
+          }
+          if ( "<% nvram_get("vpn_client5_state"); %>" == "1" ) {
+              add_option(document.form.unbound_outiface, "VPN Client 5", "vpnc5", custom_settings.unbound_outiface == "vpnc5");
+              retval = 1;
+          }
+          return retval;
+        }
+
         function initial() {
             show_menu();
             SetCurrentPage();
@@ -73,6 +99,11 @@
                 document.form.unbound_enable.value = "1";
             else
                 document.form.unbound_enable.value = custom_settings.unbound_enable;
+
+            if (custom_settings.unbound_outiface == undefined)
+                document.form.unbound_outiface.value = "any";
+            else
+                document.form.unbound_outiface.value = custom_settings.unbound_outiface;
 
             if (custom_settings.unbound_logdest == undefined)
                 document.form.unbound_logdest.value = "syslog";
@@ -120,12 +151,12 @@
                 document.form.unbound_query_minimize.value = custom_settings.unbound_query_minimize;
 
             if (custom_settings.unbound_ttl_min == undefined)
-                document.getElementById('unbound_ttl_min').value = "120";
+                document.getElementById('unbound_ttl_min').value = "0";
             else
                 document.getElementById('unbound_ttl_min').value = custom_settings.unbound_ttl_min;
 
             if (custom_settings.unbound_domain_insecure == undefined)
-                document.getElementById('unbound_domain_insecure').value = "<% nvram_get("ntp_server0 "); %> <% nvram_get("ntp_server1 "); %>";
+                document.getElementById('unbound_domain_insecure').value = "<% nvram_get("ntp_server0"); %> <% nvram_get("ntp_server1"); %>";
             else
                 document.getElementById('unbound_domain_insecure').value = Base64.decode(custom_settings.unbound_domain_insecure);
 
@@ -148,6 +179,9 @@
                 document.getElementById('unbound_custom_extend').value = "";
             else
                 document.getElementById('unbound_custom_extend').value = Base64.decode(custom_settings.unbound_custom_extend);
+
+            var vpnclientsactive = SetOutgoingInterfaceOptions();
+            hide_outiface(vpnclientsactive);
             hide_dnssec(dnssecenabled);
             hide_dnsrebind(dnsrebindenabled);
         }
@@ -158,6 +192,10 @@
 
         function hide_dnsrebind(_value) {
             showhide("dnsrebdom_tr", (_value == "1"));
+        }
+
+        function hide_outiface(_value) {
+            showhide("outiface_tr", (_value == "1"));
         }
 
         function applySettings() {
@@ -201,12 +239,13 @@
 
             /* Retrieve value from input fields, and store in object */
             custom_settings.unbound_enable = document.form.unbound_enable.value;
+            custom_settings.unbound_listen_port = document.getElementById('unbound_listen_port').value;
+            custom_settings.unbound_outiface = document.form.unbound_outiface.value;
             custom_settings.unbound_logdest = document.form.unbound_logdest.value;
             custom_settings.unbound_logextra = document.form.unbound_logextra.value;
             custom_settings.unbound_verbosity = document.form.unbound_verbosity.value;
             custom_settings.unbound_extended_stats = document.form.unbound_extended_stats.value;
             custom_settings.unbound_edns_size = document.getElementById('unbound_edns_size').value;
-            custom_settings.unbound_listen_port = document.getElementById('unbound_listen_port').value;
             custom_settings.unbound_resource = document.form.unbound_resource.value;
             custom_settings.unbound_recursion = document.form.unbound_recursion.value;
             custom_settings.unbound_query_minimize = document.form.unbound_query_minimize.value;
@@ -275,6 +314,15 @@
                                                         <input type="radio" name="unbound_enable" class="input" value="1">Yes
                                                         <input type="radio" name="unbound_enable" class="input" value="0">No
                                                         <span id="unbound_status"></span>
+                                                    </td>
+                                                </tr>
+                                                <tr id="outiface_tr">
+                                                    <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(3);">WAN Interface</a></th>
+                                                    <td>
+                                                      <select name="unbound_outiface" class="input_option">
+                                                          <option value="any">Any</option>
+                                                      </select>
+                                                      <span>Default: Any</span>
                                                     </td>
                                                 </tr>
                                                 <tr>
