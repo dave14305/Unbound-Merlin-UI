@@ -60,23 +60,23 @@
         function SetOutgoingInterfaceOptions() {
           var retval = 0;
           if ( "<% nvram_get("vpn_client1_state"); %>" == "1" ) {
-              add_option(document.form.unbound_outiface, "VPN Client 1", "vpnc1", custom_settings.unbound_outiface == "vpnc1");
+              add_option(document.form.unbound_outiface, "VPN Client 1", "tun11", custom_settings.unbound_outiface == "tun11");
               retval = 1;
           }
           if ( "<% nvram_get("vpn_client2_state"); %>" == "1" ) {
-              add_option(document.form.unbound_outiface, "VPN Client 2", "vpnc2", custom_settings.unbound_outiface == "vpnc2");
+              add_option(document.form.unbound_outiface, "VPN Client 2", "tun12", custom_settings.unbound_outiface == "tun12");
               retval = 1;
           }
           if ( "<% nvram_get("vpn_client3_state"); %>" == "1" ) {
-              add_option(document.form.unbound_outiface, "VPN Client 3", "vpnc3", custom_settings.unbound_outiface == "vpnc3");
+              add_option(document.form.unbound_outiface, "VPN Client 3", "tun13", custom_settings.unbound_outiface == "tun13");
               retval = 1;
           }
           if ( "<% nvram_get("vpn_client4_state"); %>" == "1" ) {
-              add_option(document.form.unbound_outiface, "VPN Client 4", "vpnc4", custom_settings.unbound_outiface == "vpnc4");
+              add_option(document.form.unbound_outiface, "VPN Client 4", "tun14", custom_settings.unbound_outiface == "tun14");
               retval = 1;
           }
           if ( "<% nvram_get("vpn_client5_state"); %>" == "1" ) {
-              add_option(document.form.unbound_outiface, "VPN Client 5", "vpnc5", custom_settings.unbound_outiface == "vpnc5");
+              add_option(document.form.unbound_outiface, "VPN Client 5", "tun15", custom_settings.unbound_outiface == "tun15");
               retval = 1;
           }
           return retval;
