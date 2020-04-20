@@ -60,23 +60,23 @@
         function SetOutgoingInterfaceOptions() {
           var retval = 0;
           if ( "<% nvram_get("vpn_client1_state"); %>" == "2" ) {
-              add_option(document.form.unbound_outiface, "VPN Client 1", "tun11", custom_settings.unbound_outiface == "tun11");
+              add_option(document.form.unbound_outiface, "VPN Client 1", "1", custom_settings.unbound_outiface == "1");
               retval = 1;
           }
           if ( "<% nvram_get("vpn_client2_state"); %>" == "2" ) {
-              add_option(document.form.unbound_outiface, "VPN Client 2", "tun12", custom_settings.unbound_outiface == "tun12");
+              add_option(document.form.unbound_outiface, "VPN Client 2", "2", custom_settings.unbound_outiface == "2");
               retval = 1;
           }
           if ( "<% nvram_get("vpn_client3_state"); %>" == "2" ) {
-              add_option(document.form.unbound_outiface, "VPN Client 3", "tun13", custom_settings.unbound_outiface == "tun13");
+              add_option(document.form.unbound_outiface, "VPN Client 3", "3", custom_settings.unbound_outiface == "3");
               retval = 1;
           }
           if ( "<% nvram_get("vpn_client4_state"); %>" == "2" ) {
-              add_option(document.form.unbound_outiface, "VPN Client 4", "tun14", custom_settings.unbound_outiface == "tun14");
+              add_option(document.form.unbound_outiface, "VPN Client 4", "4", custom_settings.unbound_outiface == "4");
               retval = 1;
           }
           if ( "<% nvram_get("vpn_client5_state"); %>" == "2" ) {
-              add_option(document.form.unbound_outiface, "VPN Client 5", "tun15", custom_settings.unbound_outiface == "tun15");
+              add_option(document.form.unbound_outiface, "VPN Client 5", "5", custom_settings.unbound_outiface == "5");
               retval = 1;
           }
           return retval;
@@ -101,7 +101,7 @@
                 document.form.unbound_enable.value = custom_settings.unbound_enable;
 
             if (custom_settings.unbound_outiface == undefined)
-                document.form.unbound_outiface.value = "any";
+                document.form.unbound_outiface.value = "0";
             else
                 document.form.unbound_outiface.value = custom_settings.unbound_outiface;
 
@@ -320,7 +320,7 @@
                                                     <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(3);">WAN Interface</a></th>
                                                     <td>
                                                       <select name="unbound_outiface" class="input_option">
-                                                          <option value="any">Any</option>
+                                                          <option value="0">Any</option>
                                                       </select>
                                                       <span>Default: Any</span>
                                                     </td>
