@@ -220,22 +220,21 @@ unbound_conf() {
   fi
 
   case "$UB_D_RESOURCE" in
-    # Tiny - Unbound's recommended cheap hardware config
-    tiny)   rt_mem=1  ; rt_conn=2  ; rt_buff=1 ;;
     # Small - Half RRCACHE and open ports
-    small)  rt_mem=8  ; rt_conn=10 ; rt_buff=2 ;;
+    small)  rt_mem=8  ; rt_conn=10 ;;
     # Medium - Nearly default but with some added balancintg
-    medium) rt_mem=16 ; rt_conn=15 ; rt_buff=4 ;;
+    medium) rt_mem=16 ; rt_conn=15 ;;
     # Large - Double medium
-    large)  rt_mem=32 ; rt_conn=20 ; rt_buff=4 ;;
+    large)  rt_mem=32 ; rt_conn=20 ;;
     # Whatever unbound does
-    *) rt_mem=0 ; rt_conn=0 ;;
+    xlarge) rt_mem=64 ; rt_conn=25 ;;
+    # Whatever unbound does
+    *) rt_mem=0 ;;
   esac
 
   if [ "$rt_mem" -gt 0 ] ; then
     {
       # Set memory sizing parameters
-      echo "  msg-buffer-size: $((rt_buff*8192))"
       echo "  outgoing-range: $((rt_conn*32))"
       echo "  num-queries-per-thread: $((rt_conn*16))"
       echo "  outgoing-num-tcp: $((rt_conn))"

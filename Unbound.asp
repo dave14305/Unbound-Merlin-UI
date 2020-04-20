@@ -58,6 +58,19 @@
             document.form.current_page.value = window.location.pathname.substring(1);
         }
 
+        function showCacheRAM(cacheoption) {
+          if (cacheoption == "default")
+            document.getElementById("resourcesize").innerHTML = "RAM: 12 MB";
+          if (cacheoption == "small")
+            document.getElementById("resourcesize").innerHTML = "RAM: 4 MB";
+          if (cacheoption == "medium")
+            document.getElementById("resourcesize").innerHTML = "RAM: 8 MB";
+          if (cacheoption == "large")
+            document.getElementById("resourcesize").innerHTML = "RAM: 16 MB";
+          if (cacheoption == "xlarge")
+            document.getElementById("resourcesize").innerHTML = "RAM: 32 MB";
+        }
+
         function SetOutgoingInterfaceOptions() {
           var retval = 0;
           if ( "<% nvram_get("vpn_client1_state"); %>" == "2" ) {
@@ -190,6 +203,7 @@
             hide_outiface(vpnclientsactive);
             hide_dnssec(dnssecenabled);
             hide_dnsrebind(dnsrebindenabled);
+            showCacheRAM(document.form.unbound_resource.value);
         }
 
         function hide_dnssec(_value) {
@@ -435,12 +449,14 @@
                                                     <tr>
                                                         <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(13);">Cache Sizing</a></th>
                                                         <td>
-                                                            <select name="unbound_resource" class="input_option">
+                                                            <select name="unbound_resource" class="input_option" onchange="showCacheRAM(this.value);">
                                                                 <option value="default">Default</option>
-                                                                <option value="tiny">Tiny</option>
                                                                 <option value="small">Small</option>
                                                                 <option value="medium">Medium</option>
                                                                 <option value="large">Large</option>
+                                                                <option value="xlarge">X-Large</option>
+                                                            </select>
+                                                            <span id="resourcesize">RAM: </span>
                                                         </td>
                                                     </tr>
                                                     <tr>
