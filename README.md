@@ -1,7 +1,7 @@
 # Unbound-Merlin-UI
 ASUSWRT-Merlin Unbound User Interface
 
-[![Unbound UI](https://i.imgur.com/uuPu1Nd.png "Unbound UI")](https://i.imgur.com/uuPu1Nd.png "Unbound UI")
+[![Unbound UI](https://i.imgur.com/m0N9EwF.png "Unbound UI")](https://i.imgur.com/m0N9EwF.png "Unbound UI")
 
 ## Prerequisites
 - ASUSWRT-Merlin version 384.15 or higher

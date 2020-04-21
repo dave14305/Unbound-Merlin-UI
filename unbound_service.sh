@@ -231,7 +231,7 @@ unbound_conf() {
     large)  rt_mem=32 ; rt_conn=20 ;;
     # Whatever unbound does
     xlarge) rt_mem=64 ; rt_conn=25 ;;
-    # Whatever unbound does
+    # Use default values
     *) rt_mem=0 ;;
   esac
 

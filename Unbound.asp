@@ -204,11 +204,22 @@
             else
                 document.getElementById('unbound_custom_extend').value = Base64.decode(custom_settings.unbound_custom_extend);
 
+            if (custom_settings.unbound_newvers != undefined) {
+                document.getElementById("unboundui_verstatus").innerHTML = "New version "+custom_settings.unbound_newvers+" available!";
+                showhide("checkbutton", false);
+                showhide("updatebutton", true);
+            }
+            else {
+              showhide("checkbutton", true);
+              showhide("updatebutton", false);
+            }
+
             var vpnclientsactive = SetOutgoingInterfaceOptions();
             hide_outiface(vpnclientsactive);
             hide_dnssec(dnssecenabled);
             hide_dnsrebind(dnsrebindenabled);
             showCacheRAM(document.form.unbound_resource.value);
+            //eval("delete custom_settings.unbound_newvers");
         }
 
         function hide_dnssec(_value) {
@@ -221,6 +232,19 @@
 
         function hide_outiface(_value) {
             showhide("outiface_tr", (_value == "1"));
+        }
+
+        function checkForUpdate() {
+          document.getElementById("unboundui_verstatus").style.display = "inline";
+          document.getElementById("unboundui_verstatus").innerHTML = "New version available!";
+          showhide("checkbutton", false);
+          showhide("updatebutton", true);
+        }
+
+        function updateSelf() {
+          document.getElementById("unboundui_verstatus").style.display = "none";
+          showhide("checkbutton", true);
+          showhide("updatebutton", false);
         }
 
         function applySettings() {
@@ -341,6 +365,15 @@
                                                         <input type="radio" name="unbound_enable" class="input" value="1">Yes
                                                         <input type="radio" name="unbound_enable" class="input" value="0">No
                                                         <span id="unbound_status"></span>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <th>Unbound UI Version</th>
+                                                    <td>
+                                                        <input type="text" maxlength="5" class="input_6_table" id="unboundui_ver" value="1.0" readonly>
+                                                        <input type="button" class="button_gen" onclick="checkForUpdate();" value="Check" id="checkbutton">
+                                                        <input type="button" class="button_gen" onclick="updateSelf();" value="Update" id="updatebutton" style="display:none;">
+                                                        <span id="unboundui_verstatus" style="display:none;">Current version</span>
                                                     </td>
                                                 </tr>
                                                 <tr id="outiface_tr">
