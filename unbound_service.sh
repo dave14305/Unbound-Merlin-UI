@@ -54,7 +54,8 @@ UB_CONTROL=$UB_BINDIR/unbound-control
 UB_CHECKCONF=$UB_BINDIR/unbound-checkconf
 
 # necessary for proper timezone in unbound.log
-export TZ=$(cat /etc/TZ)
+TZ="$(cat /etc/TZ)"
+export TZ
 
 # Source ASUSWRT-Merlin helper functions
 . /usr/sbin/helper.sh
@@ -198,8 +199,8 @@ unbound_conf() {
     echo "  port: $UB_N_RX_PORT"
     echo "  interface: 127.0.0.1"
     if [ -n "$UB_D_OUTIFACE" ] && [ "$UB_D_OUTIFACE" -gt 0 ]; then
-      local outiface="$(ip route | grep "dev tun1$UB_D_OUTIFACE" | awk '{print $NF}')"
-      if [ -n "$outiface" ] && [ "$(nvram get vpn_client${UB_D_OUTIFACE}_state)" = "2" ]; then
+      local outiface="$(ip route | grep "dev tun1$UB_D_OUTIFACE .*src" | awk '{print $NF}')"
+      if [ -n "$outiface" ] && [ "$(nvram get vpn_client"${UB_D_OUTIFACE}"_state)" = "2" ]; then
         echo "  outgoing-interface: $outiface"
       else
         logger -t "Unbound-UI" "Selected WAN interface VPN Client $UB_D_OUTIFACE is not active."
@@ -548,7 +549,7 @@ unbound_mountui() {
 
   if [ "$(uname -o)" = "ASUSWRT-Merlin-LTS" ]; then
     # John's fork
-    MyPageTitle="$(echo $am_webui_page | sed 's~.asp~~g').title"
+    MyPageTitle="$(echo "$am_webui_page" | sed 's~.asp~~g').title"
     echo "Unbound" > "/www/user/$MyPageTitle"
   else
     # Merlin
@@ -594,7 +595,7 @@ unbound_unmountui() {
       fi
     else
       # John's fork
-      MyPageTitle="$(echo $am_webui_page | sed 's~.asp~~g').title"
+      MyPageTitle="$(echo "$am_webui_page" | sed 's~.asp~~g').title"
       rm -rf "/www/user/$MyPageTitle"
     fi
     if [ -f /www/user/"$am_webui_page" ]; then
