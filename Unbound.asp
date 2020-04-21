@@ -169,6 +169,11 @@
             else
                 document.form.unbound_cache_root.value = custom_settings.unbound_cache_root;
 
+            if (custom_settings.unbound_save_cache == undefined)
+                document.form.unbound_save_cache = "0"
+            else
+              document.form.unbound_save_cache = custom_settings.unbound_save_cache;
+
             if (custom_settings.unbound_ttl_min == undefined)
                 document.getElementById('unbound_ttl_min').value = "0";
             else
@@ -276,6 +281,7 @@
             custom_settings.unbound_custom_extend = Base64.encode(document.getElementById('unbound_custom_extend').value);
             custom_settings.unbound_statslog = document.form.unbound_statslog.value;
             custom_settings.unbound_cache_root = document.form.unbound_cache_root.value;
+            custom_settings.unbound_save_cache = document.form.unbound_save_cache;
 
             /* Store object as a string in the amng_custom hidden input field */
             document.getElementById('amng_custom').value = JSON.stringify(custom_settings);
@@ -486,6 +492,13 @@
                                                     <td>
                                                         <input type="radio" name="unbound_cache_root" class="input" value="1">Yes
                                                         <input type="radio" name="unbound_cache_root" class="input" value="0">No
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(18);">Save cache on restart</a></th>
+                                                    <td>
+                                                        <input type="radio" name="unbound_save_cache" class="input" value="1">Yes
+                                                        <input type="radio" name="unbound_save_cache" class="input" value="0">No
                                                     </td>
                                                 </tr>
                                                 <thead>

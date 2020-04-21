@@ -53,6 +53,8 @@ UB_ANCHOR=$UB_BINDIR/unbound-anchor
 UB_CONTROL=$UB_BINDIR/unbound-control
 UB_CHECKCONF=$UB_BINDIR/unbound-checkconf
 
+UB_CACHE_DUMP=$UB_VARDIR/cache_dump.tmp
+
 # necessary for proper timezone in unbound.log
 TZ="$(cat /etc/TZ)"
 export TZ
@@ -420,6 +422,7 @@ unbound_uci() {
   UB_D_STATSLOG=$(am_settings_get unbound_statslog); [ -z "$UB_D_STATSLOG" ] && UB_D_STATSLOG=0
   UB_B_NTP_SYNC="$(nvram get ntp_ready)"
   UB_B_CACHE_ROOT=$(am_settings_get unbound_cache_root); [ -z "$UB_B_CACHE_ROOT" ] && UB_B_CACHE_ROOT=0
+  UB_B_SAVE_CACHE=$(am_settings_get unbound_save_cache); [ -z "$UB_B_SAVE_CACHE" ] && UB_B_SAVE_CACHE=0
 
   if [ "$UB_N_EDNS_SIZE" -lt 512 ] || [ 4096 -lt "$UB_N_EDNS_SIZE" ] ; then
     UB_N_EDNS_SIZE=1280
@@ -724,6 +727,9 @@ install_unboundui() {
     echo "else"
     echo "  ENABLED=yes"
     echo "fi"
+    echo "if [[ \"\$(am_settings_get unbound_save_cache)\" = \"1\" && ( \"\$1\" = \"stop\" || \"\$1\" = \"restart\" ) && \"\$(pidof unbound)\" && \"\$(nvram get ntp_ready)\" = \"1\" ]] ; then"
+    echo "  $UB_CONTROL dump_cache > $UB_CACHE_DUMP"
+    echo "fi"
     echo "PROCS=unbound"
     echo "ARGS=\"-c $UB_TOTAL_CONF\""
     echo "PREARGS=\"nohup\""
@@ -733,6 +739,10 @@ install_unboundui() {
     echo "PATH=/opt/sbin:/opt/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
     echo ""
     echo ". /opt/etc/init.d/rc.func"
+    echo ""
+    echo "if [[ \"\$(am_settings_get unbound_save_cache)\" = \"1\" && ( \"\$1\" = \"start\" || \"\$1\" = \"restart\" ) && -f \"$UB_CACHE_DUMP\" && \"\$(pidof unbound)\" && \"\$(nvram get ntp_ready)\" = \"1\" ]] ; then"
+    echo "  $UB_CONTROL load_cache < $UB_CACHE_DUMP"
+    echo "fi"
   } > $UB_INIT_FILE
 
   echo "Enabling Unbound UI..."
@@ -782,6 +792,10 @@ if [ "$#" -ge "1" ]; then
       generate_conf
       ;;
     restart)
+      if [ "$UB_B_SAVE_CACHE" = "1" ] && [ -n "$(pidof unbound)" ] && [ "$UB_B_NTP_SYNC" = "1" ]; then
+        # only dump cache if enabled and unbound is running and time is set
+        $UB_CONTROL dump_cache > "$UB_CACHE_DUMP"
+      fi
       if [ "$UB_B_ENABLED" = "1" ] && [ "$UB_N_RX_PORT" = "$($UB_CHECKCONF -o port)" ] && [ -n "$(pidof unbound)" ] && [ "$($UB_CHECKCONF -o val-override-date)" = "0" ]; then
         restart_action="reload"
       fi
@@ -794,12 +808,19 @@ if [ "$#" -ge "1" ]; then
         if [ -n "$(pidof unbound)" ]; then
           # Unbound is already running
           $UB_CONTROL stop
-        fi
+        fi  # running
         if [ "$UB_B_ENABLED" = "1" ]; then
           # only start it again if it's enabled in the GUI
           $UB_CONTROL start
-        fi
-      fi
+        fi  # enabled
+      fi  # reload
+      if [ -n "$(pidof unbound)" ] && [ -f "$UB_CACHE_DUMP" ] && [ "$UB_B_ENABLED" = "1" ] && [ "$UB_B_NTP_SYNC" = "1" ]; then
+        CACHE_AGE=$(($(date +%s)-$(date -r $UB_CACHE_DUMP +%s)))
+        if [ "$CACHE_AGE" -lt 3600 ]; then
+          $UB_CONTROL load_cache < "$UB_CACHE_DUMP"
+          rm -f "$UB_CACHE_DUMP"
+        fi # less than 1 hr old
+      fi  # running, file exists, unbound enabled and time is synced
       ;;
     mountui)
       unbound_mountui
