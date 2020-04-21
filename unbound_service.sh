@@ -318,6 +318,7 @@ unbound_conf() {
     # Block server id and version DNS TXT records
     echo "  hide-identity: yes"
     echo "  hide-version: yes"
+    echo "  rrset-roundrobin: yes"
     echo
   } >> "$UB_CORE_CONF"
 
