@@ -23,6 +23,7 @@
 #
 ##############################################################################
 
+# v0.1.0
 # Adapted for ASUSWRT-Merlin from OpenWRT unbound.sh
 
 # Unbound Directory locations
@@ -525,6 +526,91 @@ generate_conf() {
   fi
 }
 
+
+Check_Connection() {
+	livecheck="0"
+	while [ "$livecheck" != "4" ]; do
+		if ping -q -w3 -c1 google.com >/dev/null 2>&1; then
+			break
+		else
+			if ping -q -w3 -c1 github.com >/dev/null 2>&1; then
+				break
+			else
+				if ping -q -w3 -c1 snbforums.com >/dev/null 2>&1; then
+					break
+				else
+					livecheck="$((livecheck + 1))"
+					if [ "$livecheck" != "4" ]; then
+						echo "[*] Internet Connectivity Error"
+						sleep 10
+					else
+						return "1"
+					fi
+				fi
+			fi
+		fi
+	done
+}
+
+Filter_Version() {
+	grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})'
+}
+
+Download_File() {
+	if [ "$(curl -fsL --retry 3 --connect-timeout 3 "${remotedir}/${1}" | md5sum | awk '{print $1}')" != "$(md5sum "$2" 2>/dev/null | awk '{print $1}')" ]; then
+		if curl -fsL --retry 3 --connect-timeout 3 "${remotedir}/${1}" -o "$2"; then
+			echo "[i] Updated $(echo "$1" | awk -F / '{print $NF}')"
+		else
+			logger -t Unbound-UI "[*] Updating $(echo "$1" | awk -F / '{print $NF}') Failed"; echo "[*] Updating $(echo "$1" | awk -F / '{print $NF}') Failed"
+		fi
+	fi
+}
+
+checkUnboundUIupdate() {
+  if ! Check_Connection; then echo "[*] Connection Error Detected - Exiting"; echo; exit 1; fi
+  remotedir="https://raw.githubusercontent.com/dave14305/Unbound-Merlin-UI/master"
+  #remotever_sh="$(curl -fsL --retry 3 --connect-timeout 3 "${remotedir}/unbound_service.sh" | Filter_Version)"
+  localmd5_sh="$(md5sum "$0" | awk '{print $1}')"
+  remotemd5_sh="$(curl -fsL --retry 3 --connect-timeout 3 "${remotedir}/unbound_service.sh" | md5sum | awk '{print $1}')"
+  #remotever_asp="$(curl -fsL --retry 3 --connect-timeout 3 "${remotedir}/Unbound.asp" | Filter_Version)"
+  localmd5_asp="$(md5sum "$UB_ADDON_DIR/Unbound.asp" | awk '{print $1}')"
+  remotemd5_asp="$(curl -fsL --retry 3 --connect-timeout 3 "${remotedir}/Unbound.asp" | md5sum | awk '{print $1}')"
+  if [[ "$localmd5_sh" = "$remotemd5_sh" && "$localmd5_asp" = "$remotemd5_asp" ]]; then
+    logger -t Unbound-UI "Unbound-UI Up To Date"
+    am_settings_set unbound_newvers ""
+  elif [[ "$localmd5_sh" != "$remotemd5_sh" || "$localmd5_asp" != "$remotemd5_asp" ]]; then
+    logger -t Unbound-UI "Unbound-UI Update Detected (${remotemd5_sh}/${remotemd5_asp})"
+    am_settings_set unbound_newvers "${remotemd5_sh}/${remotemd5_asp}"
+  fi
+
+}
+
+updateUnboundUI() {
+  if ! Check_Connection; then echo "[*] Connection Error Detected - Exiting"; echo; exit 1; fi
+  remotedir="https://raw.githubusercontent.com/dave14305/Unbound-Merlin-UI/master"
+  #remotever_sh="$(curl -fsL --retry 3 --connect-timeout 3 "${remotedir}/unbound_service.sh" | Filter_Version)"
+  localmd5_sh="$(md5sum "$0" | awk '{print $1}')"
+  remotemd5_sh="$(curl -fsL --retry 3 --connect-timeout 3 "${remotedir}/unbound_service.sh" | md5sum | awk '{print $1}')"
+  #remotever_asp="$(curl -fsL --retry 3 --connect-timeout 3 "${remotedir}/Unbound.asp" | Filter_Version)"
+  localmd5_asp="$(md5sum "$UB_ADDON_DIR/Unbound.asp" | awk '{print $1}')"
+  remotemd5_asp="$(curl -fsL --retry 3 --connect-timeout 3 "${remotedir}/Unbound.asp" | md5sum | awk '{print $1}')"
+  if [ "$localmd5_asp" != "$remotemd5_asp" ]; then
+    unbound_unmountui
+    Download_File "Unbound.asp" "$UB_ADDON_DIR/Unbound.asp"
+    unbound_mountui
+    am_settings_set unbound_newvers ""
+  fi
+  if [ "$localmd5_sh" != "$remotemd5_sh" ]; then
+    Download_File "unbound_service.sh" "$0"
+    # update S61unbound
+    # update service-event
+    logger -t Unbound-UI "[i] Restarting Unbound"; echo "[i] Restarting Unbound"
+    am_settings_set unbound_newvers ""
+    service restart_unbound
+    echo; exit 0
+  fi
+}
+
 unbound_mountui() {
   # Does the firmware support addons?
   if ! nvram get rc_support | grep -q am_addons;
@@ -831,6 +917,12 @@ if [ "$#" -ge "1" ]; then
       ;;
     dnsmasq_postconf)
       dnsmasq_postconf "$2"
+      ;;
+    checkupdate)
+      checkUnboundUIupdate
+      ;;
+    update)
+      updateUnboundUI
       ;;
     install)
       install_unboundui
