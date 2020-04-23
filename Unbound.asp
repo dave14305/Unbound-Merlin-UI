@@ -140,7 +140,7 @@
                 document.form.unbound_extended_stats.value = custom_settings.unbound_extended_stats;
 
             if (custom_settings.unbound_edns_size == undefined)
-                document.getElementById('unbound_edns_size').value = "1280";
+                document.getElementById('unbound_edns_size').value = "1232";
             else
                 document.getElementById('unbound_edns_size').value = custom_settings.unbound_edns_size;
 
@@ -494,7 +494,7 @@
                                                         <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(12);">EDNS Buffer Size</a></th>
                                                         <td>
                                                             <input type="text" maxlength="5" class="input_6_table" id="unbound_edns_size" onKeyPress="return validator.isNumber(this,event);" value="0">&nbsp;bytes
-                                                            <span>Default: 4096</span>
+                                                            <span>Default: 1232</span>
                                                         </td>
                                                     </tr>
                                                     <tr>
