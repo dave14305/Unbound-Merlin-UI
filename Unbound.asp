@@ -317,7 +317,7 @@
             custom_settings.unbound_custom_extend = Base64.encode(document.getElementById('unbound_custom_extend').value);
             custom_settings.unbound_statslog = document.form.unbound_statslog.value;
             custom_settings.unbound_cache_root = document.form.unbound_cache_root.value;
-            custom_settings.unbound_save_cache = document.form.unbound_save_cache;
+            custom_settings.unbound_save_cache = document.form.unbound_save_cache.value;
 
             /* Store object as a string in the amng_custom hidden input field */
             document.getElementById('amng_custom').value = JSON.stringify(custom_settings);
