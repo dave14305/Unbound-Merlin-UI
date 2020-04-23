@@ -23,7 +23,7 @@
 #
 ##############################################################################
 
-# v0.9.0 2020-04-23 by dave14305
+# v0.9.1 2020-04-23 by dave14305
 # Adapted for ASUSWRT-Merlin from OpenWRT unbound.sh
 
 # Unbound Directory locations
@@ -800,10 +800,11 @@ install_unboundui() {
   download_file "Unbound.asp" "$UB_ADDON_DIR/Unbound.asp"
   download_file "unbound_service.sh" "$UB_ADDON_DIR/unbound_service.sh"
 
-  if [ -f $UB_ADDON_DIR/unbound_service.sh ]; then
+  if [ -f $UB_ADDON_DIR/unbound_service.sh ] && [ -f $UB_ADDON_DIR/Unbound.asp ]; then
     chmod 755 $UB_ADDON_DIR/unbound_service.sh
+    chmod 644 $UB_ADDON_DIR/Unbound.asp
   else
-    echo "Error downloading service script!"
+    echo "Error downloading files!"
     exit 5
   fi
 
