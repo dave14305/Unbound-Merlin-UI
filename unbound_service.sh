@@ -23,7 +23,7 @@
 #
 ##############################################################################
 
-# v0.8.0 2020-04-22 by dave14305
+# v0.8.1 2020-04-22 by dave14305
 # Adapted for ASUSWRT-Merlin from OpenWRT unbound.sh
 
 # Unbound Directory locations

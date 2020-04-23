@@ -244,19 +244,12 @@
           document.form.action_script.value = "start_unboundcheckupd";
           document.form.action_wait.value = 1;
           document.form.submit();
-          //document.getElementById("unbound_ui_verstatus").style.display = "inline";
-          //document.getElementById("unbound_ui_verstatus").innerHTML = "New version available!";
-          //showhide("checkbutton", false);
-          //showhide("updatebutton", true);
         }
 
         function updateSelf() {
           document.form.action_script.value = "start_unboundupdate";
           document.form.action_wait.value = 1;
           document.form.submit();
-          //document.getElementById("unbound_ui_verstatus").style.display = "none";
-          //showhide("checkbutton", true);
-          //showhide("updatebutton", false);
         }
 
         function applySettings() {
