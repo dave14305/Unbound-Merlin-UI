@@ -827,6 +827,7 @@ install_unboundui() {
   sh $UB_ADDON_DIR/unbound_service.sh mountui
   service restart_unbound
   service restart_dnsmasq
+  rm -f $HOME/unbound_service.sh
 }
 
 uninstall_unboundui() {
