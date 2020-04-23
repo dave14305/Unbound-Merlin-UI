@@ -597,7 +597,7 @@ updateUnboundUI() {
     # update S61unbound
     # update service-event
     logger -t Unbound-UI "[i] Restarting Unbound"; echo "[i] Restarting Unbound"
-    service restart_unbound
+    service restart_unbound &
     echo; exit 0
   fi
 }
