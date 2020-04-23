@@ -729,7 +729,7 @@ install_unboundui() {
     mkdir -p $UB_ADDON_DIR && chmod 755 $UB_ADDON_DIR
   fi
 
-  Download_File "$UB_GIT_REPO/Unbound.asp" "$UB_ADDON_DIR/Unbound.asp"
+  Download_File "Unbound.asp" "$UB_ADDON_DIR/Unbound.asp"
   Download_File "unbound_service.sh" "$UB_ADDON_DIR/unbound_service.sh"
 
   if [ -f $UB_ADDON_DIR/unbound_service.sh ]; then
