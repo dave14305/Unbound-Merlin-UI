@@ -515,6 +515,9 @@ auto_serviceevent() {
   if [ ! -x "/jffs/scripts/service-event" ]; then
     chmod 755 /jffs/scripts/service-event
   fi
+  if [ "$(/bin/grep -vE "^#" /jffs/scripts/service-event | /bin/grep -qE "# Unbound-UI Addition")" -ne "4" ]; then
+    sed -i '\~# Unbound-UI Addition~d' /jffs/scripts/service-event
+  fi
   if ! /bin/grep -vE "^#" /jffs/scripts/service-event | /bin/grep -qE "unbound.*sh $UB_ADDON_DIR/unbound_service.sh"; then
     cmdline="if [ \"\$2\" = \"unbound\" ]; then sh $UB_ADDON_DIR/unbound_service.sh \"\$1\" ; fi # Unbound-UI Addition"
     sed -i '\~\"unbound\".*# Unbound-UI Addition~d' /jffs/scripts/service-event
