@@ -686,6 +686,8 @@ unbound_unmountui() {
   for i in $(/bin/grep -l UnboundUI-by-dave14305 /www/user/user*.asp 2>/dev/null)
   do
     rm "$i"
+    MyPageTitle="$(echo "$i" | sed 's~.asp~~g').title"
+    rm -rf "/www/user/$MyPageTitle"
   done
 }
 
