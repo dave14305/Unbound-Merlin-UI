@@ -591,14 +591,12 @@ updateUnboundUI() {
     unbound_unmountui
     Download_File "Unbound.asp" "$UB_ADDON_DIR/Unbound.asp"
     unbound_mountui
-    am_settings_set unbound_ui_newversion ""
   fi
   if [ "$localmd5_sh" != "$remotemd5_sh" ]; then
-    Download_File "unbound_service.sh" "$0"
+    Download_File "unbound_service.sh" "$UB_ADDON_DIR/unbound_service.sh"
     # update S61unbound
     # update service-event
     logger -t Unbound-UI "[i] Restarting Unbound"; echo "[i] Restarting Unbound"
-    am_settings_set unbound_ui_newversion ""
     service restart_unbound
     echo; exit 0
   fi
@@ -731,8 +729,8 @@ install_unboundui() {
     mkdir -p $UB_ADDON_DIR && chmod 755 $UB_ADDON_DIR
   fi
 
-  curl -o $UB_ADDON_DIR/Unbound.asp https://raw.githubusercontent.com/dave14305/Unbound-Merlin-UI/master/Unbound.asp
-  curl -o $UB_ADDON_DIR/unbound_service.sh https://raw.githubusercontent.com/dave14305/Unbound-Merlin-UI/master/unbound_service.sh
+  Download_File "$UB_GIT_REPO/Unbound.asp" "$UB_ADDON_DIR/Unbound.asp"
+  Download_File "unbound_service.sh" "$UB_ADDON_DIR/unbound_service.sh"
 
   if [ -f $UB_ADDON_DIR/unbound_service.sh ]; then
     chmod 755 $UB_ADDON_DIR/unbound_service.sh
