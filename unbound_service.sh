@@ -608,23 +608,15 @@ auto_entwareinit() {
 # From Adamm00
 check_connection() {
 	livecheck="0"
-	while [ "$livecheck" != "4" ]; do
-		if ping -q -w3 -c1 google.com >/dev/null 2>&1; then
+	while [ "$livecheck" != "2" ]; do
+		if ping -q -w3 -c1 raw.githubusercontent.com >/dev/null 2>&1; then
 			break
 		else
-			if ping -q -w3 -c1 github.com >/dev/null 2>&1; then
-				break
+			livecheck="$((livecheck + 1))"
+			if [ "$livecheck" != "2" ]; then
+				sleep 3
 			else
-				if ping -q -w3 -c1 snbforums.com >/dev/null 2>&1; then
-					break
-				else
-					livecheck="$((livecheck + 1))"
-					if [ "$livecheck" != "4" ]; then
-						sleep 10
-					else
-						return "1"
-					fi
-				fi
+				return "1"
 			fi
 		fi
 	done
