@@ -580,7 +580,7 @@ checkUnboundUIupdate() {
 }
 
 updateUnboundUI() {
-  if ! Check_Connection; then echo "[*] Connection Error Detected - Exiting"; echo; exit 1; fi
+  if ! Check_Connection; then am_settings_set unbound_ui_newversion "CONERR"; exit 1; fi
   #remotever_sh="$(curl -fsL --retry 3 --connect-timeout 3 "${UB_GIT_REPO}/unbound_service.sh" | Filter_Version)"
   localmd5_sh="$(md5sum "$0" | awk '{print $1}')"
   remotemd5_sh="$(curl -fsL --retry 3 --connect-timeout 3 "${UB_GIT_REPO}/unbound_service.sh" | md5sum | awk '{print $1}')"
@@ -596,9 +596,8 @@ updateUnboundUI() {
     Download_File "unbound_service.sh" "$UB_ADDON_DIR/unbound_service.sh"
     # update S61unbound
     # update service-event
-    logger -t Unbound-UI "[i] Restarting Unbound"; echo "[i] Restarting Unbound"
-    service restart_unbound &
-    echo; exit 0
+    logger -t Unbound-UI "Restarting Unbound"
+    exec "$0" restart
   fi
 }
 
