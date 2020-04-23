@@ -573,8 +573,8 @@ Download_File() {
 
 checkUnboundUIupdate() {
   if ! Check_Connection; then am_settings_set unbound_ui_newversion "CONERR"; exit 1; fi
-  remotever="$(curl -fsL --retry 3 --connect-timeout 3 "$UB_GIT_VERSION" | /bin/grep '^S_VERSION=' | sed -e 's/S_VERSION=//')"
-  if /bin/grep -q '[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})' "$remotever" && [ "$UB_LOCAL_VERSION" != "$remotever" ]; then
+  remotever="$(curl -fsL --retry 3 --connect-timeout 3 "${UB_GIT_REPO}/unbound_service.sh" | /bin/grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})' | sed -e 's/v//')"
+  if [ "$UB_LOCAL_VERSION" != "$remotever" ]; then
     am_settings_set unbound_ui_newversion "$remotever"
   fi
 }
