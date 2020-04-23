@@ -170,9 +170,9 @@
                 document.form.unbound_cache_root.value = custom_settings.unbound_cache_root;
 
             if (custom_settings.unbound_save_cache == undefined)
-                document.form.unbound_save_cache = "0"
+                document.form.unbound_save_cache.value = "0"
             else
-              document.form.unbound_save_cache = custom_settings.unbound_save_cache;
+                document.form.unbound_save_cache.value = custom_settings.unbound_save_cache;
 
             if (custom_settings.unbound_ttl_min == undefined)
                 document.getElementById('unbound_ttl_min').value = "0";
