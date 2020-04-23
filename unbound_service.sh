@@ -757,6 +757,21 @@ install_unboundui() {
     sed -i '\~\"unbound\".*# Unbound-UI Addition~d' /jffs/scripts/service-event
     echo "$cmdline" >> /jffs/scripts/service-event
   fi
+  if ! /bin/grep -vE "^#" /jffs/scripts/service-event | /bin/grep -qE "unbound.*sh $UB_ADDON_DIR/unbound_service.sh"; then
+    cmdline="if [ \"\$2\" = \"unbound\" ]; then sh $UB_ADDON_DIR/unbound_service.sh \"\$1\" ; fi # Unbound-UI Addition"
+    sed -i '\~\"unbound\".*# Unbound-UI Addition~d' /jffs/scripts/service-event
+    echo "$cmdline" >> /jffs/scripts/service-event
+  fi
+  if ! /bin/grep -vE "^#" /jffs/scripts/service-event | /bin/grep -qE "unboundcheckupd.*sh $UB_ADDON_DIR/unbound_service.sh"; then
+    cmdline="if [ \"\$2\" = \"unboundcheckupd\" ]; then sh $UB_ADDON_DIR/unbound_service.sh checkupdate ; fi # Unbound-UI Addition"
+    sed -i '\~\"unboundcheckupd\".*# Unbound-UI Addition~d' /jffs/scripts/service-event
+    echo "$cmdline" >> /jffs/scripts/service-event
+  fi
+  if ! /bin/grep -vE "^#" /jffs/scripts/service-event | /bin/grep -qE "unboundupdate.*sh $UB_ADDON_DIR/unbound_service.sh"; then
+    cmdline="if [ \"\$2\" = \"unboundupdate\" ]; then sh $UB_ADDON_DIR/unbound_service.sh update ; fi # Unbound-UI Addition"
+    sed -i '\~\"unboundupdate\".*# Unbound-UI Addition~d' /jffs/scripts/service-event
+    echo "$cmdline" >> /jffs/scripts/service-event
+  fi
   if ! /bin/grep -vE "^#" /jffs/scripts/service-event | /bin/grep -qE "restart.*diskmon.*sh $UB_ADDON_DIR/unbound_service.sh"; then
     cmdline="if [ \"\$1\" = \"restart\" ] && [ \"\$2\" = \"diskmon\" ]; then sh $UB_ADDON_DIR/unbound_service.sh restart ; fi # Unbound-UI Addition"
     sed -i '\~\"diskmon\".*# Unbound-UI Addition~d' /jffs/scripts/service-event
