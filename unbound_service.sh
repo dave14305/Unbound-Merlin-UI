@@ -23,7 +23,7 @@
 #
 ##############################################################################
 
-# v0.1.0
+# v0.8.0 2020-04-22 by dave14305
 # Adapted for ASUSWRT-Merlin from OpenWRT unbound.sh
 
 # Unbound Directory locations
@@ -56,12 +56,21 @@ UB_CHECKCONF=$UB_BINDIR/unbound-checkconf
 
 UB_CACHE_DUMP=$UB_VARDIR/cache_dump.tmp
 
+UB_GIT_REPO="https://raw.githubusercontent.com/dave14305/Unbound-Merlin-UI/master"
+UB_GIT_VERSION=$UB_GIT_REPO/unboundui.info
+UB_LOCAL_VERSION="$(/bin/grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})' "$0" | sed -e 's/v//')"
+
+#v0.1.1
 # necessary for proper timezone in unbound.log
 TZ="$(cat /etc/TZ)"
 export TZ
 
 # Source ASUSWRT-Merlin helper functions
 . /usr/sbin/helper.sh
+
+if [ "$(am_settings_get unbound_ui_version)" != "$UB_LOCAL_VERSION" ]; then
+  am_settings_set unbound_ui_version "$UB_LOCAL_VERSION"
+fi
 
 unbound_mkdir() {
   if [ -f "$UB_RKEY_FILE" ] ; then
@@ -155,7 +164,7 @@ unbound_conf() {
     echo >> "$UB_CORE_CONF"
   fi
 
-  if $UB_BINDIR/unbound -V | grep -q "Linked libs:.*libevent" ; then
+  if $UB_BINDIR/unbound -V | /bin/grep -q "Linked libs:.*libevent" ; then
     # heavy variant using "threads" may need substantial resources
     echo "  num-threads: 2" >> "$UB_CORE_CONF"
   else
@@ -202,7 +211,7 @@ unbound_conf() {
     echo "  port: $UB_N_RX_PORT"
     echo "  interface: 127.0.0.1"
     if [ -n "$UB_D_OUTIFACE" ] && [ "$UB_D_OUTIFACE" -gt 0 ]; then
-      local outiface="$(ip route | grep "dev tun1$UB_D_OUTIFACE .*src" | awk '{print $NF}')"
+      local outiface="$(ip route | /bin/grep "dev tun1$UB_D_OUTIFACE .*src" | awk '{print $NF}')"
       if [ -n "$outiface" ] && [ "$(nvram get vpn_client"${UB_D_OUTIFACE}"_state)" = "2" ]; then
         echo "  outgoing-interface: $outiface"
       else
@@ -552,60 +561,44 @@ Check_Connection() {
 	done
 }
 
-Filter_Version() {
-	grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})'
-}
-
 Download_File() {
-	if [ "$(curl -fsL --retry 3 --connect-timeout 3 "${remotedir}/${1}" | md5sum | awk '{print $1}')" != "$(md5sum "$2" 2>/dev/null | awk '{print $1}')" ]; then
-		if curl -fsL --retry 3 --connect-timeout 3 "${remotedir}/${1}" -o "$2"; then
-			echo "[i] Updated $(echo "$1" | awk -F / '{print $NF}')"
+	if [ "$(curl -fsL --retry 3 --connect-timeout 3 "${UB_GIT_REPO}/${1}" | md5sum | awk '{print $1}')" != "$(md5sum "$2" 2>/dev/null | awk '{print $1}')" ]; then
+		if curl -fsL --retry 3 --connect-timeout 3 "${UB_GIT_REPO}/${1}" -o "$2"; then
+			logger -t Unbound-UI "Updated $(echo "$1" | awk -F / '{print $NF}')"
 		else
-			logger -t Unbound-UI "[*] Updating $(echo "$1" | awk -F / '{print $NF}') Failed"; echo "[*] Updating $(echo "$1" | awk -F / '{print $NF}') Failed"
+			logger -t Unbound-UI "Updating $(echo "$1" | awk -F / '{print $NF}') Failed"
 		fi
 	fi
 }
 
 checkUnboundUIupdate() {
-  if ! Check_Connection; then echo "[*] Connection Error Detected - Exiting"; echo; exit 1; fi
-  remotedir="https://raw.githubusercontent.com/dave14305/Unbound-Merlin-UI/master"
-  #remotever_sh="$(curl -fsL --retry 3 --connect-timeout 3 "${remotedir}/unbound_service.sh" | Filter_Version)"
-  localmd5_sh="$(md5sum "$0" | awk '{print $1}')"
-  remotemd5_sh="$(curl -fsL --retry 3 --connect-timeout 3 "${remotedir}/unbound_service.sh" | md5sum | awk '{print $1}')"
-  #remotever_asp="$(curl -fsL --retry 3 --connect-timeout 3 "${remotedir}/Unbound.asp" | Filter_Version)"
-  localmd5_asp="$(md5sum "$UB_ADDON_DIR/Unbound.asp" | awk '{print $1}')"
-  remotemd5_asp="$(curl -fsL --retry 3 --connect-timeout 3 "${remotedir}/Unbound.asp" | md5sum | awk '{print $1}')"
-  if [[ "$localmd5_sh" = "$remotemd5_sh" && "$localmd5_asp" = "$remotemd5_asp" ]]; then
-    logger -t Unbound-UI "Unbound-UI Up To Date"
-    am_settings_set unbound_newvers ""
-  elif [[ "$localmd5_sh" != "$remotemd5_sh" || "$localmd5_asp" != "$remotemd5_asp" ]]; then
-    logger -t Unbound-UI "Unbound-UI Update Detected (${remotemd5_sh}/${remotemd5_asp})"
-    am_settings_set unbound_newvers "${remotemd5_sh}/${remotemd5_asp}"
+  if ! Check_Connection; then am_settings_set unbound_ui_newversion "CONERR"; exit 1; fi
+  remotever="$(curl -fsL --retry 3 --connect-timeout 3 "$UB_GIT_VERSION" | /bin/grep '^S_VERSION=' | sed -e 's/S_VERSION=//')"
+  if /bin/grep -q '[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})' "$remotever" && [ "$UB_LOCAL_VERSION" != "$remotever" ]; then
+    am_settings_set unbound_ui_newversion "$remotever"
   fi
-
 }
 
 updateUnboundUI() {
   if ! Check_Connection; then echo "[*] Connection Error Detected - Exiting"; echo; exit 1; fi
-  remotedir="https://raw.githubusercontent.com/dave14305/Unbound-Merlin-UI/master"
-  #remotever_sh="$(curl -fsL --retry 3 --connect-timeout 3 "${remotedir}/unbound_service.sh" | Filter_Version)"
+  #remotever_sh="$(curl -fsL --retry 3 --connect-timeout 3 "${UB_GIT_REPO}/unbound_service.sh" | Filter_Version)"
   localmd5_sh="$(md5sum "$0" | awk '{print $1}')"
-  remotemd5_sh="$(curl -fsL --retry 3 --connect-timeout 3 "${remotedir}/unbound_service.sh" | md5sum | awk '{print $1}')"
-  #remotever_asp="$(curl -fsL --retry 3 --connect-timeout 3 "${remotedir}/Unbound.asp" | Filter_Version)"
+  remotemd5_sh="$(curl -fsL --retry 3 --connect-timeout 3 "${UB_GIT_REPO}/unbound_service.sh" | md5sum | awk '{print $1}')"
+  #remotever_asp="$(curl -fsL --retry 3 --connect-timeout 3 "${UB_GIT_REPO}/Unbound.asp" | Filter_Version)"
   localmd5_asp="$(md5sum "$UB_ADDON_DIR/Unbound.asp" | awk '{print $1}')"
-  remotemd5_asp="$(curl -fsL --retry 3 --connect-timeout 3 "${remotedir}/Unbound.asp" | md5sum | awk '{print $1}')"
+  remotemd5_asp="$(curl -fsL --retry 3 --connect-timeout 3 "${UB_GIT_REPO}/Unbound.asp" | md5sum | awk '{print $1}')"
   if [ "$localmd5_asp" != "$remotemd5_asp" ]; then
     unbound_unmountui
     Download_File "Unbound.asp" "$UB_ADDON_DIR/Unbound.asp"
     unbound_mountui
-    am_settings_set unbound_newvers ""
+    am_settings_set unbound_ui_newversion ""
   fi
   if [ "$localmd5_sh" != "$remotemd5_sh" ]; then
     Download_File "unbound_service.sh" "$0"
     # update S61unbound
     # update service-event
     logger -t Unbound-UI "[i] Restarting Unbound"; echo "[i] Restarting Unbound"
-    am_settings_set unbound_newvers ""
+    am_settings_set unbound_ui_newversion ""
     service restart_unbound
     echo; exit 0
   fi
@@ -613,7 +606,7 @@ updateUnboundUI() {
 
 unbound_mountui() {
   # Does the firmware support addons?
-  if ! nvram get rc_support | grep -q am_addons;
+  if ! nvram get rc_support | /bin/grep -q am_addons;
   then
       logger -t "Unbound-UI" "This firmware does not support addons!"
       exit 5
@@ -663,7 +656,7 @@ unbound_mountui() {
 
 unbound_unmountui() {
   # Does the firmware support addons?
-  if ! nvram get rc_support | grep -q am_addons;
+  if ! nvram get rc_support | /bin/grep -q am_addons;
   then
       logger -t "Unbound-UI" "This firmware does not support addons!"
       exit 5
@@ -753,18 +746,18 @@ install_unboundui() {
   if [ ! -f "/jffs/scripts/service-event" ]; then
       echo "#!/bin/sh" > /jffs/scripts/service-event
       echo >> /jffs/scripts/service-event
-  elif [ -f "/jffs/scripts/service-event" ] && ! head -1 /jffs/scripts/service-event | grep -qE "^#!/bin/sh"; then
+  elif [ -f "/jffs/scripts/service-event" ] && ! head -1 /jffs/scripts/service-event | /bin/grep -qE "^#!/bin/sh"; then
       sed -i '1s~^~#!/bin/sh\n~' /jffs/scripts/service-event
   fi
   if [ ! -x "/jffs/scripts/service-event" ]; then
     chmod 755 /jffs/scripts/service-event
   fi
-  if ! grep -vE "^#" /jffs/scripts/service-event | grep -qE "unbound.*sh $UB_ADDON_DIR/unbound_service.sh"; then
+  if ! /bin/grep -vE "^#" /jffs/scripts/service-event | /bin/grep -qE "unbound.*sh $UB_ADDON_DIR/unbound_service.sh"; then
     cmdline="if [ \"\$2\" = \"unbound\" ]; then sh $UB_ADDON_DIR/unbound_service.sh \"\$1\" ; fi # Unbound-UI Addition"
     sed -i '\~\"unbound\".*# Unbound-UI Addition~d' /jffs/scripts/service-event
     echo "$cmdline" >> /jffs/scripts/service-event
   fi
-  if ! grep -vE "^#" /jffs/scripts/service-event | grep -qE "restart.*diskmon.*sh $UB_ADDON_DIR/unbound_service.sh"; then
+  if ! /bin/grep -vE "^#" /jffs/scripts/service-event | /bin/grep -qE "restart.*diskmon.*sh $UB_ADDON_DIR/unbound_service.sh"; then
     cmdline="if [ \"\$1\" = \"restart\" ] && [ \"\$2\" = \"diskmon\" ]; then sh $UB_ADDON_DIR/unbound_service.sh restart ; fi # Unbound-UI Addition"
     sed -i '\~\"diskmon\".*# Unbound-UI Addition~d' /jffs/scripts/service-event
     echo "$cmdline" >> /jffs/scripts/service-event
@@ -773,13 +766,13 @@ install_unboundui() {
   if [ ! -f "/jffs/scripts/services-start" ]; then
       echo "#!/bin/sh" > /jffs/scripts/services-start
       echo >> /jffs/scripts/services-start
-  elif [ -f "/jffs/scripts/services-start" ] && ! head -1 /jffs/scripts/services-start | grep -qE "^#!/bin/sh"; then
+  elif [ -f "/jffs/scripts/services-start" ] && ! head -1 /jffs/scripts/services-start | /bin/grep -qE "^#!/bin/sh"; then
       sed -i '1s~^~#!/bin/sh\n~' /jffs/scripts/services-start
   fi
   if [ ! -x "/jffs/scripts/services-start" ]; then
     chmod 755 /jffs/scripts/services-start
   fi
-  if ! grep -vE "^#" /jffs/scripts/services-start | grep -qF "sh $UB_ADDON_DIR/unbound_service.sh"; then
+  if ! /bin/grep -vE "^#" /jffs/scripts/services-start | /bin/grep -qF "sh $UB_ADDON_DIR/unbound_service.sh"; then
     cmdline="sh $UB_ADDON_DIR/unbound_service.sh mountui # Unbound-UI Addition"
     sed -i '\~# Unbound-UI Addition~d' /jffs/scripts/services-start
     echo "$cmdline" >> /jffs/scripts/services-start
@@ -788,13 +781,13 @@ install_unboundui() {
   if [ ! -f "/jffs/scripts/dnsmasq.postconf" ]; then
       echo "#!/bin/sh" > /jffs/scripts/dnsmasq.postconf
       echo >> /jffs/scripts/dnsmasq.postconf
-  elif [ -f "/jffs/scripts/dnsmasq.postconf" ] && ! head -1 /jffs/scripts/dnsmasq.postconf | grep -qE "^#!/bin/sh"; then
+  elif [ -f "/jffs/scripts/dnsmasq.postconf" ] && ! head -1 /jffs/scripts/dnsmasq.postconf | /bin/grep -qE "^#!/bin/sh"; then
       sed -i '1s~^~#!/bin/sh\n~' /jffs/scripts/dnsmasq.postconf
   fi
   if [ ! -x "/jffs/scripts/dnsmasq.postconf" ]; then
     chmod 755 /jffs/scripts/dnsmasq.postconf
   fi
-  if ! grep -vE "^#" /jffs/scripts/dnsmasq.postconf | grep -qF "sh $UB_ADDON_DIR/unbound_service.sh"; then
+  if ! /bin/grep -vE "^#" /jffs/scripts/dnsmasq.postconf | /bin/grep -qF "sh $UB_ADDON_DIR/unbound_service.sh"; then
     cmdline="sh $UB_ADDON_DIR/unbound_service.sh dnsmasq_postconf \"\$1\" # Unbound-UI Addition"
     sed -i '\~# Unbound-UI Addition~d' /jffs/scripts/dnsmasq.postconf
     echo "$cmdline" >> /jffs/scripts/dnsmasq.postconf

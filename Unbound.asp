@@ -204,14 +204,14 @@
             else
                 document.getElementById('unbound_custom_extend').value = Base64.decode(custom_settings.unbound_custom_extend);
 
-            if (custom_settings.unbound_ver == undefined)
-              document.form.unboundui_ver.value = "N/A";
+            if (custom_settings.unbound_ui_version == undefined)
+              document.form.unbound_ui_version.value = "N/A";
             else
-              document.form.unboundui_ver.value = custom_settings.unboundui_ver;
+              document.form.unbound_ui_version.value = custom_settings.unbound_ui_version;
 
-            if (custom_settings.unbound_newvers != undefined) {
-                document.getElementById("unboundui_verstatus").innerHTML = "New version "+custom_settings.unbound_newvers+" available!";
-                document.getElementById("unboundui_verstatus").style.display = "inline";
+            if (custom_settings.unbound_ui_newversion != undefined && custom_settings.unbound_ui_newversion != custom_settings.unbound_ui_version ) {
+                document.getElementById("unbound_ui_verstatus").innerHTML = "New version "+custom_settings.unbound_ui_newversion+" available!";
+                document.getElementById("unbound_ui_verstatus").style.display = "inline";
                 showhide("checkbutton", false);
                 showhide("updatebutton", true);
             }
@@ -225,7 +225,7 @@
             hide_dnssec(dnssecenabled);
             hide_dnsrebind(dnsrebindenabled);
             showCacheRAM(document.form.unbound_resource.value);
-            //eval("delete custom_settings.unbound_newvers");
+            //eval("delete custom_settings.unbound_ui_newversion");
         }
 
         function hide_dnssec(_value) {
@@ -244,8 +244,8 @@
           document.form.action_script.value = "start_unboundcheckupd";
           document.form.action_wait.value = 1;
           document.form.submit();
-          //document.getElementById("unboundui_verstatus").style.display = "inline";
-          //document.getElementById("unboundui_verstatus").innerHTML = "New version available!";
+          //document.getElementById("unbound_ui_verstatus").style.display = "inline";
+          //document.getElementById("unbound_ui_verstatus").innerHTML = "New version available!";
           //showhide("checkbutton", false);
           //showhide("updatebutton", true);
         }
@@ -254,7 +254,7 @@
           document.form.action_script.value = "start_unboundupdate";
           document.form.action_wait.value = 1;
           document.form.submit();
-          //document.getElementById("unboundui_verstatus").style.display = "none";
+          //document.getElementById("unbound_ui_verstatus").style.display = "none";
           //showhide("checkbutton", true);
           //showhide("updatebutton", false);
         }
@@ -382,10 +382,10 @@
                                                 <tr>
                                                     <th>Unbound UI Version</th>
                                                     <td>
-                                                        <input type="text" maxlength="5" class="input_6_table" id="unboundui_ver" value="" readonly>
+                                                        <input type="text" maxlength="5" class="input_6_table" id="unbound_ui_version" value="" readonly>
                                                         <input type="button" class="button_gen" onclick="checkForUpdate();" value="Check" id="checkbutton">
                                                         <input type="button" class="button_gen" onclick="updateSelf();" value="Update" id="updatebutton" style="display:none;">
-                                                        <span id="unboundui_verstatus" style="display:none;">Current version</span>
+                                                        <span id="unbound_ui_verstatus" style="display:none;">Current version</span>
                                                     </td>
                                                 </tr>
                                                 <tr id="outiface_tr">
