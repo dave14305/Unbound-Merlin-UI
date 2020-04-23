@@ -242,13 +242,13 @@
 
         function checkForUpdate() {
           document.form.action_script.value = "start_unboundcheckupd";
-          document.form.action_wait.value = 1;
+          document.form.action_wait.value = 2;
           document.form.submit();
         }
 
         function updateSelf() {
           document.form.action_script.value = "start_unboundupdate";
-          document.form.action_wait.value = 1;
+          document.form.action_wait.value = 5;
           document.form.submit();
         }
 
