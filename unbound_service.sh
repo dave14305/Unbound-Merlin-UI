@@ -403,7 +403,7 @@ unbound_getconf() {
   UB_D_RESOURCE=$(am_settings_get unbound_resource); [ -z "$UB_D_RESOURCE" ] && { UB_D_RESOURCE=default ; am_settings_set unbound_resource "$UB_D_RESOURCE" ; }
   UB_B_QUERY_MIN=$(am_settings_get unbound_query_minimize); [ -z "$UB_B_QUERY_MIN" ] && { UB_B_QUERY_MIN=1 ; am_settings_set unbound_query_minimize "$UB_B_QUERY_MIN" ; }
   UB_D_RECURSION=$(am_settings_get unbound_recursion); [ -z "$UB_D_RECURSION" ] && { UB_D_RECURSION=passive ; am_settings_set unbound_recursion "$UB_D_RECURSION" ; }
-  UB_TTL_MIN=$(am_settings_get unbound_ttl_min); [ -z "$UB_TTL_MIN" ] && { UB_TTL_MIN=120 ; am_settings_set unbound_ttl_min "$UB_TTL_MIN" ; }
+  UB_TTL_MIN=$(am_settings_get unbound_ttl_min); [ -z "$UB_TTL_MIN" ] && { UB_TTL_MIN=0 ; am_settings_set unbound_ttl_min "$UB_TTL_MIN" ; }
   UB_B_CACHE_ROOT=$(am_settings_get unbound_cache_root); [ -z "$UB_B_CACHE_ROOT" ] && { UB_B_CACHE_ROOT=0 ; am_settings_set unbound_cache_root "$UB_B_CACHE_ROOT" ; }
   UB_B_SAVE_CACHE=$(am_settings_get unbound_save_cache); [ -z "$UB_B_SAVE_CACHE" ] && { UB_B_SAVE_CACHE=0 ; am_settings_set unbound_save_cache "$UB_B_SAVE_CACHE" ; }
   UB_CUSTOM_SERVER_CONFIG="$(am_settings_get unbound_custom_server)"
