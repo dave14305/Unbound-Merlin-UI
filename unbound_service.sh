@@ -510,7 +510,7 @@ auto_serviceevent() {
   if [ ! -x "/jffs/scripts/service-event" ]; then
     chmod 755 /jffs/scripts/service-event
   fi
-  if [ "$(/bin/grep -vE "^#" /jffs/scripts/service-event | /bin/grep -qE "# Unbound-UI Addition")" -ne "3" ]; then
+  if [ "$(/bin/grep -vE "^#" /jffs/scripts/service-event | /bin/grep -qE "# Unbound-UI Addition" | wc -l)" -ne "3" ]; then
     sed -i '\~# Unbound-UI Addition~d' /jffs/scripts/service-event
   fi
   if ! /bin/grep -vE "^#" /jffs/scripts/service-event | /bin/grep -qE "unbound.*sh $UB_ADDON_DIR/unbound_service.sh"; then
@@ -541,9 +541,6 @@ auto_serviceeventend() {
   fi
   if [ ! -x "/jffs/scripts/service-event-end" ]; then
     chmod 755 /jffs/scripts/service-event-end
-  fi
-  if [ "$(/bin/grep -vE "^#" /jffs/scripts/service-event-end | /bin/grep -qE "# Unbound-UI Addition")" -ne "1" ]; then
-    sed -i '\~# Unbound-UI Addition~d' /jffs/scripts/service-event-end
   fi
   if ! /bin/grep -vE "^#" /jffs/scripts/service-event-end | /bin/grep -qE "restart.*diskmon.*sh $UB_ADDON_DIR/unbound_service.sh"; then
     cmdline="if [ \"\$1\" = \"restart\" ] && [ \"\$2\" = \"diskmon\" ]; then sh $UB_ADDON_DIR/unbound_service.sh restart ; fi # Unbound-UI Addition"
