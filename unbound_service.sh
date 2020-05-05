@@ -169,7 +169,7 @@ unbound_conf() {
   		echo "  log-servfail: yes"
     fi
     if [ "$UB_D_STATSLOG" -gt 0 ] ; then
-      echo "  statistics-interval: $(($UB_D_STATSLOG*60))"
+      echo "  statistics-interval: $((UB_D_STATSLOG*60))"
   	fi
     if [ "$UB_D_VERBOSE" -ge 0 ] && [ "$UB_D_VERBOSE" -le 5 ] ; then
       echo "  verbosity: $UB_D_VERBOSE"
