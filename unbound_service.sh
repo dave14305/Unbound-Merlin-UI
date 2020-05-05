@@ -67,11 +67,6 @@ export TZ
 # Source ASUSWRT-Merlin helper functions
 . /usr/sbin/helper.sh
 
-# Update version number is custom settings file
-if [ "$(am_settings_get unbound_ui_version)" != "$UB_LOCAL_VERSION" ]; then
-  am_settings_set unbound_ui_version "$UB_LOCAL_VERSION"
-fi
-
 unbound_mkdir() {
   [ ! -d "$UB_VARDIR" ] && mkdir -p "$UB_VARDIR"
   touch "$UB_TOTAL_CONF"
@@ -822,6 +817,7 @@ install_unboundui() {
   fi
 
   auto_serviceevent
+  auto_serviceeventend
   auto_servicesstart
   auto_dnsmasqpostconf
   auto_entwareinit
@@ -887,6 +883,15 @@ load_cache() {
 
 # main
 if [ "$#" -ge "1" ]; then
+  # Update version number is custom settings file
+  if [ "$(am_settings_get unbound_ui_version)" != "$UB_LOCAL_VERSION" ]; then
+    am_settings_set unbound_ui_version "$UB_LOCAL_VERSION"
+    auto_serviceevent
+    auto_serviceeventend
+    auto_servicesstart
+    auto_dnsmasqpostconf
+    auto_entwareinit
+  fi
   # get configuration options from Merlin API
   unbound_getconf
   case "$1" in
