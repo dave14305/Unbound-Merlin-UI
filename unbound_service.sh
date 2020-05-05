@@ -23,7 +23,7 @@
 #
 ##############################################################################
 
-# v0.9.3 2020-05-05 by dave14305
+# v0.9.4 2020-05-05 by dave14305
 # Adapted for ASUSWRT-Merlin from OpenWRT unbound.sh
 
 # Unbound Directory locations
@@ -515,7 +515,7 @@ auto_serviceevent() {
   if [ ! -x "/jffs/scripts/service-event" ]; then
     chmod 755 /jffs/scripts/service-event
   fi
-  if [ "$(/bin/grep -vE "^#" /jffs/scripts/service-event | /bin/grep -qE "# Unbound-UI Addition")" -ne "4" ]; then
+  if [ "$(/bin/grep -vE "^#" /jffs/scripts/service-event | /bin/grep -qE "# Unbound-UI Addition")" -ne "3" ]; then
     sed -i '\~# Unbound-UI Addition~d' /jffs/scripts/service-event
   fi
   if ! /bin/grep -vE "^#" /jffs/scripts/service-event | /bin/grep -qE "unbound.*sh $UB_ADDON_DIR/unbound_service.sh"; then
@@ -533,10 +533,27 @@ auto_serviceevent() {
     sed -i '\~\"ubupdate\".*# Unbound-UI Addition~d' /jffs/scripts/service-event
     echo "$cmdline" >> /jffs/scripts/service-event
   fi
-  if ! /bin/grep -vE "^#" /jffs/scripts/service-event | /bin/grep -qE "restart.*diskmon.*sh $UB_ADDON_DIR/unbound_service.sh"; then
+}
+
+auto_serviceeventend() {
+  # Borrowed from Adamm00
+  # https://github.com/Adamm00/IPSet_ASUS/blob/master/firewall.sh
+  if [ ! -f "/jffs/scripts/service-event-end" ]; then
+      echo "#!/bin/sh" > /jffs/scripts/service-event-end
+      echo >> /jffs/scripts/service-event-end
+  elif [ -f "/jffs/scripts/service-event-end" ] && ! head -1 /jffs/scripts/service-event-end | /bin/grep -qE "^#!/bin/sh"; then
+      sed -i '1s~^~#!/bin/sh\n~' /jffs/scripts/service-event-end
+  fi
+  if [ ! -x "/jffs/scripts/service-event-end" ]; then
+    chmod 755 /jffs/scripts/service-event-end
+  fi
+  if [ "$(/bin/grep -vE "^#" /jffs/scripts/service-event-end | /bin/grep -qE "# Unbound-UI Addition")" -ne "1" ]; then
+    sed -i '\~# Unbound-UI Addition~d' /jffs/scripts/service-event-end
+  fi
+  if ! /bin/grep -vE "^#" /jffs/scripts/service-event-end | /bin/grep -qE "restart.*diskmon.*sh $UB_ADDON_DIR/unbound_service.sh"; then
     cmdline="if [ \"\$1\" = \"restart\" ] && [ \"\$2\" = \"diskmon\" ]; then sh $UB_ADDON_DIR/unbound_service.sh restart ; fi # Unbound-UI Addition"
-    sed -i '\~\"diskmon\".*# Unbound-UI Addition~d' /jffs/scripts/service-event
-    echo "$cmdline" >> /jffs/scripts/service-event
+    sed -i '\~\"diskmon\".*# Unbound-UI Addition~d' /jffs/scripts/service-event-end
+    echo "$cmdline" >> /jffs/scripts/service-event-end
   fi
 }
 
@@ -657,6 +674,7 @@ update_unboundui() {
   if [ "$localmd5_sh" != "$remotemd5_sh" ]; then
     download_file "unbound_service.sh" "$UB_ADDON_DIR/unbound_service.sh"
     auto_serviceevent
+    auto_serviceeventend
     auto_servicesstart
     auto_dnsmasqpostconf
     auto_entwareinit
