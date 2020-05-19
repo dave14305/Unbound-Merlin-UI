@@ -23,7 +23,7 @@
 #
 ##############################################################################
 
-# v0.9.4 2020-05-05 by dave14305
+# v0.9.5 2020-05-19 by dave14305
 # Adapted for ASUSWRT-Merlin from OpenWRT unbound.sh
 
 # Unbound Directory locations
@@ -193,7 +193,8 @@ unbound_conf() {
     echo "  port: $UB_N_RX_PORT"
     echo "  interface: 127.0.0.1"
     if [ -n "$UB_D_OUTIFACE" ] && [ "$UB_D_OUTIFACE" -gt 0 ]; then
-      local outiface="$(ip route | /bin/grep "dev tun1$UB_D_OUTIFACE .*src" | awk '{print $NF}')"
+      local outiface
+      outiface="$(ip route | /bin/grep "dev tun1$UB_D_OUTIFACE .*src" | awk '{print $NF}')"
       if [ -n "$outiface" ] && [ "$(nvram get vpn_client"${UB_D_OUTIFACE}"_state)" = "2" ]; then
         echo "  outgoing-interface: $outiface"
       else
@@ -838,6 +839,7 @@ uninstall_unboundui() {
   fi
   echo -n "Removing custom script entries..."
   sed -i '\~# Unbound-UI Addition~d' /jffs/scripts/service-event
+  sed -i '\~# Unbound-UI Addition~d' /jffs/scripts/service-event-end
   sed -i '\~# Unbound-UI Addition~d' /jffs/scripts/services-start
   sed -i '\~# Unbound-UI Addition~d' /jffs/scripts/dnsmasq.postconf
   echo "done."
