@@ -741,7 +741,7 @@ unbound_unmountui() {
       # Remove unbound tab from menu. TODO - don't also delete Unbound stats page
       sed -i "\~tabName: \"Unbound\"},~d" /tmp/menuTree.js
       umount /www/require/modules/menuTree.js 2>/dev/null
-      if diff /tmp/menuTree.js /www/require/modules/menuTree.js; then
+      if diff -q /tmp/menuTree.js /www/require/modules/menuTree.js; then
         rm /tmp/menuTree.js
       else
         # Still some modifications from another script so remount
