@@ -23,7 +23,7 @@
 #
 ##############################################################################
 
-# v0.9.5 2020-05-19 by dave14305
+# v0.9.6 2020-09-22 by dave14305
 # Adapted for ASUSWRT-Merlin from OpenWRT unbound.sh
 
 # Unbound Directory locations
@@ -213,11 +213,11 @@ unbound_conf() {
     # Small - Half RRCACHE and open ports
     small)  rt_mem=8  ; rt_conn=10 ;;
     # Medium - Nearly default but with some added balancintg
-    medium) rt_mem=16 ; rt_conn=15 ;;
+    medium) rt_mem=16 ; rt_conn=20 ;;
     # Large - Double medium
-    large)  rt_mem=32 ; rt_conn=20 ;;
+    large)  rt_mem=32 ; rt_conn=50 ;;
     # Whatever unbound does
-    xlarge) rt_mem=64 ; rt_conn=25 ;;
+    xlarge) rt_mem=64 ; rt_conn=50 ;;
     # Use default values
     *) rt_mem=0 ;;
   esac
@@ -231,15 +231,25 @@ unbound_conf() {
       echo "  incoming-num-tcp: $((rt_conn))"
       echo "  rrset-cache-size: $((rt_mem*256))k"
       echo "  msg-cache-size: $((rt_mem*128))k"
+	  echo "  stream-wait-size: $((rt_mem*128))k"
       echo "  key-cache-size: $((rt_mem*128))k"
-      echo "  neg-cache-size: $((rt_mem*64))k"
+      echo "  neg-cache-size: $((rt_mem*32))k"
+	  echo "  ratelimit-size: $((rt_mem*32))k"
+      echo "  ip-ratelimit-size: $((rt_mem*32))k"
       echo "  infra-cache-numhosts: $((rt_mem*256))"
       echo
     } >> "$UB_CORE_CONF"
   fi
 
   # Assembly of module-config: options is tricky; order matters
+  moduleopts="$($UB_BINDIR/unbound -V )"
   modulestring="iterator"
+    case "$moduleopts" in
+	*with-python*)
+		modulestring="python $modulestring"
+		;;
+  esac
+
   if [ "$UB_B_DNSSEC" -gt 0 ] ; then
     if [ "$UB_B_NTP_SYNC" -eq 0 ] ; then
       # DNSSEC chicken and egg with getting NTP time
@@ -247,6 +257,13 @@ unbound_conf() {
     fi
     modulestring="validator $modulestring"
   fi
+
+	case "$moduleopts" in
+	*enable-subnet*)
+		modulestring="subnetcache $modulestring"
+		;;
+	esac
+
   {
     # Print final module string
     echo "  module-config: \"$modulestring\""
