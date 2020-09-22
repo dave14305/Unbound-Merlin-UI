@@ -231,25 +231,15 @@ unbound_conf() {
       echo "  incoming-num-tcp: $((rt_conn))"
       echo "  rrset-cache-size: $((rt_mem*256))k"
       echo "  msg-cache-size: $((rt_mem*128))k"
-	  echo "  stream-wait-size: $((rt_mem*128))k"
       echo "  key-cache-size: $((rt_mem*128))k"
       echo "  neg-cache-size: $((rt_mem*32))k"
-	  echo "  ratelimit-size: $((rt_mem*32))k"
-      echo "  ip-ratelimit-size: $((rt_mem*32))k"
       echo "  infra-cache-numhosts: $((rt_mem*256))"
       echo
     } >> "$UB_CORE_CONF"
   fi
 
   # Assembly of module-config: options is tricky; order matters
-  moduleopts="$($UB_BINDIR/unbound -V )"
   modulestring="iterator"
-    case "$moduleopts" in
-	*with-python*)
-		modulestring="python $modulestring"
-		;;
-  esac
-
   if [ "$UB_B_DNSSEC" -gt 0 ] ; then
     if [ "$UB_B_NTP_SYNC" -eq 0 ] ; then
       # DNSSEC chicken and egg with getting NTP time
@@ -257,13 +247,6 @@ unbound_conf() {
     fi
     modulestring="validator $modulestring"
   fi
-
-	case "$moduleopts" in
-	*enable-subnet*)
-		modulestring="subnetcache $modulestring"
-		;;
-	esac
-
   {
     # Print final module string
     echo "  module-config: \"$modulestring\""
