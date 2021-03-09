@@ -919,6 +919,9 @@ if [ "$#" -ge "1" ]; then
         fi  # enabled
       fi  # reload
       load_cache
+      if ! /bin/grep -qE "^server=127\.0\.0\.1#${UB_N_RX_PORT}$" /etc/dnsmasq.conf; then
+        service restart_dnsmasq
+      fi
       ;;
     mountui)
       unbound_mountui
