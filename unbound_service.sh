@@ -677,6 +677,7 @@ update_unboundui() {
 }
 
 unbound_mountui() {
+	local LOCKFILE FD
   # Does the firmware support addons?
   if ! nvram get rc_support | /bin/grep -q am_addons;
   then
@@ -690,7 +691,10 @@ unbound_mountui() {
     logger -t "Unbound-UI" "WebUI files missing!"
     exit 5
   fi
-
+	LOCKFILE=/tmp/addonwebui.lock
+	FD=386
+	eval exec "$FD>$LOCKFILE"
+	/usr/bin/flock -x "$FD"
   # Obtain the first available mount point in $am_webui_page
   am_get_webui_page $UB_ADDON_DIR/Unbound.asp
 
@@ -723,15 +727,22 @@ unbound_mountui() {
       mount -o bind /tmp/menuTree.js /www/require/modules/menuTree.js
     fi
   fi
+	/usr/bin/flock -u "$FD"
 }
 
 unbound_unmountui() {
+	local LOCKFILE FD
   # Does the firmware support addons?
   if ! nvram get rc_support | /bin/grep -q am_addons;
   then
       logger -t "Unbound-UI" "This firmware does not support addons!"
       exit 5
   fi
+
+	LOCKFILE=/tmp/addonwebui.lock
+	FD=386
+	eval exec "$FD>$LOCKFILE"
+	/usr/bin/flock -x "$FD"
 
   am_get_webui_page $UB_ADDON_DIR/Unbound.asp
 
@@ -756,6 +767,7 @@ unbound_unmountui() {
         rm /www/user/"$am_webui_page" && logger -t "Unbound-UI" "Unmount: page removed"
     fi
   fi
+	/usr/bin/flock -u "$FD"
   for i in $(/bin/grep -l UnboundUI-by-dave14305 /www/user/user*.asp 2>/dev/null)
   do
     rm "$i"
