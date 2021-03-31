@@ -383,25 +383,25 @@ unbound_zones() {
 }
 
 unbound_getconf() {
-  UB_B_ENABLED="$(am_settings_get unbound_enable)"; [ -z "$UB_B_ENABLED" ] && { UB_B_ENABLED=1 ; am_settings_set unbound_enable "$UB_B_ENABLED" ; }
-  UB_D_OUTIFACE="$(am_settings_get unbound_outiface)"; [ -z "$UB_D_OUTIFACE" ] && { UB_D_OUTIFACE=0 ; am_settings_set unbound_outiface "$UB_D_OUTIFACE" ; }
-  UB_N_RX_PORT=$(am_settings_get unbound_listen_port); [ -z "$UB_N_RX_PORT" ] && { UB_N_RX_PORT=5653 ; am_settings_set unbound_listen_port "$UB_N_RX_PORT" ; }
-  UB_D_LOGDEST=$(am_settings_get unbound_logdest); [ -z "$UB_D_LOGDEST" ] && { UB_D_LOGDEST=syslog ; am_settings_set unbound_logdest "$UB_D_LOGDEST" ; }
-  UB_D_VERBOSE=$(am_settings_get unbound_verbosity); [ -z "$UB_D_VERBOSE" ] && { UB_D_VERBOSE=1 ; am_settings_set unbound_verbosity "$UB_D_VERBOSE" ; }
-  UB_D_LOGEXTRA=$(am_settings_get unbound_logextra); [ -z "$UB_D_LOGEXTRA" ] && { UB_D_LOGEXTRA=0 ; am_settings_set unbound_logextra "$UB_D_LOGEXTRA" ; }
-  UB_D_STATSLOG=$(am_settings_get unbound_statslog); [ -z "$UB_D_STATSLOG" ] && { UB_D_STATSLOG=0 ; am_settings_set unbound_statslog "$UB_D_STATSLOG" ; }
+  UB_B_ENABLED="$(am_settings_get unbound_enable)"; [ -z "$UB_B_ENABLED" ] && UB_B_ENABLED=1
+  UB_D_OUTIFACE="$(am_settings_get unbound_outiface)"; [ -z "$UB_D_OUTIFACE" ] && UB_D_OUTIFACE=0
+  UB_N_RX_PORT=$(am_settings_get unbound_listen_port); [ -z "$UB_N_RX_PORT" ] && UB_N_RX_PORT=5653
+  UB_D_LOGDEST=$(am_settings_get unbound_logdest); [ -z "$UB_D_LOGDEST" ] && UB_D_LOGDEST=syslog
+  UB_D_VERBOSE=$(am_settings_get unbound_verbosity); [ -z "$UB_D_VERBOSE" ] && UB_D_VERBOSE=1
+  UB_D_LOGEXTRA=$(am_settings_get unbound_logextra); [ -z "$UB_D_LOGEXTRA" ] && UB_D_LOGEXTRA=0
+  UB_D_STATSLOG=$(am_settings_get unbound_statslog); [ -z "$UB_D_STATSLOG" ] && UB_D_STATSLOG=0
   UB_B_DNSSEC=$(nvram get dnssec_enable); [ -z "$UB_B_DNSSEC" ] && UB_B_DNSSEC=1
   UB_LIST_INSECURE="$(am_settings_get unbound_domain_insecure)"
   UB_D_PRIV_BLCK=$(nvram get dns_norebind); [ -z "$UB_D_PRIV_BLCK" ] && UB_D_PRIV_BLCK=0
   UB_LIST_PRIVATE="$(am_settings_get unbound_domain_rebindok)"
-  UB_B_EXT_STATS=$(am_settings_get unbound_extended_stats); [ -z "$UB_B_EXT_STATS" ] && { UB_B_EXT_STATS=0 ; am_settings_set unbound_extended_stats "$UB_B_EXT_STATS" ; }
-  UB_N_EDNS_SIZE=$(am_settings_get unbound_edns_size); [ -z "$UB_N_EDNS_SIZE" ] && { UB_N_EDNS_SIZE=1232 ; am_settings_set unbound_edns_size "$UB_N_EDNS_SIZE" ; }
-  UB_D_RESOURCE=$(am_settings_get unbound_resource); [ -z "$UB_D_RESOURCE" ] && { UB_D_RESOURCE=default ; am_settings_set unbound_resource "$UB_D_RESOURCE" ; }
-  UB_B_QUERY_MIN=$(am_settings_get unbound_query_minimize); [ -z "$UB_B_QUERY_MIN" ] && { UB_B_QUERY_MIN=1 ; am_settings_set unbound_query_minimize "$UB_B_QUERY_MIN" ; }
-  UB_D_RECURSION=$(am_settings_get unbound_recursion); [ -z "$UB_D_RECURSION" ] && { UB_D_RECURSION=passive ; am_settings_set unbound_recursion "$UB_D_RECURSION" ; }
-  UB_TTL_MIN=$(am_settings_get unbound_ttl_min); [ -z "$UB_TTL_MIN" ] && { UB_TTL_MIN=0 ; am_settings_set unbound_ttl_min "$UB_TTL_MIN" ; }
-  UB_B_CACHE_ROOT=$(am_settings_get unbound_cache_root); [ -z "$UB_B_CACHE_ROOT" ] && { UB_B_CACHE_ROOT=0 ; am_settings_set unbound_cache_root "$UB_B_CACHE_ROOT" ; }
-  UB_B_SAVE_CACHE=$(am_settings_get unbound_save_cache); [ -z "$UB_B_SAVE_CACHE" ] && { UB_B_SAVE_CACHE=0 ; am_settings_set unbound_save_cache "$UB_B_SAVE_CACHE" ; }
+  UB_B_EXT_STATS=$(am_settings_get unbound_extended_stats); [ -z "$UB_B_EXT_STATS" ] && UB_B_EXT_STATS=0
+  UB_N_EDNS_SIZE=$(am_settings_get unbound_edns_size); [ -z "$UB_N_EDNS_SIZE" ] && UB_N_EDNS_SIZE=1232
+  UB_D_RESOURCE=$(am_settings_get unbound_resource); [ -z "$UB_D_RESOURCE" ] && UB_D_RESOURCE=default
+  UB_B_QUERY_MIN=$(am_settings_get unbound_query_minimize); [ -z "$UB_B_QUERY_MIN" ] && UB_B_QUERY_MIN=1
+  UB_D_RECURSION=$(am_settings_get unbound_recursion); [ -z "$UB_D_RECURSION" ] && UB_D_RECURSION=passive
+  UB_TTL_MIN=$(am_settings_get unbound_ttl_min); [ -z "$UB_TTL_MIN" ] && UB_TTL_MIN=0
+  UB_B_CACHE_ROOT=$(am_settings_get unbound_cache_root); [ -z "$UB_B_CACHE_ROOT" ] && UB_B_CACHE_ROOT=0
+  UB_B_SAVE_CACHE=$(am_settings_get unbound_save_cache); [ -z "$UB_B_SAVE_CACHE" ] && UB_B_SAVE_CACHE=0
   UB_CUSTOM_SERVER_CONFIG="$(am_settings_get unbound_custom_server)"
   UB_CUSTOM_EXTEND_CONFIG="$(am_settings_get unbound_custom_extend)"
   UB_B_NTP_SYNC="$(nvram get ntp_ready)"

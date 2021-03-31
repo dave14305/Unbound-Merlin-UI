@@ -300,26 +300,102 @@
            )
             document.form.action_script.value += ";restart_dnsmasq";
 
-        /* Retrieve value from input fields, and store in object */
-        custom_settings.unbound_enable = document.form.unbound_enable.value;
-        custom_settings.unbound_listen_port = document.getElementById('unbound_listen_port').value;
-        custom_settings.unbound_outiface = document.form.unbound_outiface.value;
-        custom_settings.unbound_logdest = document.form.unbound_logdest.value;
-        custom_settings.unbound_logextra = document.form.unbound_logextra.value;
-        custom_settings.unbound_verbosity = document.form.unbound_verbosity.value;
-        custom_settings.unbound_extended_stats = document.form.unbound_extended_stats.value;
-        custom_settings.unbound_edns_size = document.getElementById('unbound_edns_size').value;
-        custom_settings.unbound_resource = document.form.unbound_resource.value;
-        custom_settings.unbound_recursion = document.form.unbound_recursion.value;
-        custom_settings.unbound_query_minimize = document.form.unbound_query_minimize.value;
-        custom_settings.unbound_ttl_min = document.getElementById('unbound_ttl_min').value;
-        custom_settings.unbound_domain_rebindok = Base64.encode(document.getElementById('unbound_domain_rebindok').value);
-        custom_settings.unbound_domain_insecure = Base64.encode(document.getElementById('unbound_domain_insecure').value);
-        custom_settings.unbound_custom_server = Base64.encode(document.getElementById('unbound_custom_server').value);
-        custom_settings.unbound_custom_extend = Base64.encode(document.getElementById('unbound_custom_extend').value);
-        custom_settings.unbound_statslog = document.form.unbound_statslog.value;
-        custom_settings.unbound_cache_root = document.form.unbound_cache_root.value;
-        custom_settings.unbound_save_cache = document.form.unbound_save_cache.value;
+        /* Retrieve value from input fields, and store non-default values in object */
+
+		if (document.form.unbound_enable.value == "1")
+			delete custom_settings.unbound_enable;
+		else
+			custom_settings.unbound_enable = document.form.unbound_enable.value;
+
+		if (document.form.unbound_outiface.value == "0")
+			delete custom_settings.unbound_outiface;
+		else
+			custom_settings.unbound_outiface = document.form.unbound_outiface.value;
+
+		if (document.form.unbound_logdest.value == "syslog")
+			delete custom_settings.unbound_logdest;
+		else
+			custom_settings.unbound_logdest = document.form.unbound_logdest.value;
+
+		if (document.form.unbound_logextra.value == "0")
+			delete custom_settings.unbound_logextra;
+		else
+			custom_settings.unbound_logextra = document.form.unbound_logextra.value;
+
+		if (document.form.unbound_verbosity.value == "1")
+			delete custom_settings.unbound_verbosity;
+		else
+			custom_settings.unbound_verbosity = document.form.unbound_verbosity.value;
+
+		if (document.form.unbound_extended_stats.value == "0")
+			delete custom_settings.unbound_extended_stats;
+		else
+			custom_settings.unbound_extended_stats = document.form.unbound_extended_stats.value;
+
+		if (document.getElementById('unbound_edns_size').value == "1232")
+			delete custom_settings.unbound_edns_size;
+		else
+			custom_settings.unbound_edns_size = document.getElementById('unbound_edns_size').value;
+
+		if (document.getElementById('unbound_listen_port').value == "5653")
+			delete custom_settings.unbound_listen_port;
+		else
+			custom_settings.unbound_listen_port = document.getElementById('unbound_listen_port').value;
+
+		if (document.form.unbound_resource.value == "default")
+			delete custom_settings.unbound_resource;
+		else
+			custom_settings.unbound_resource = document.form.unbound_resource.value;
+
+		if (document.form.unbound_recursion.value == "default")
+			delete custom_settings.unbound_recursion;
+		else
+			custom_settings.unbound_recursion = document.form.unbound_recursion.value;
+
+		if (document.form.unbound_query_minimize.value == "1")
+			delete custom_settings.unbound_query_minimize;
+		else
+			custom_settings.unbound_query_minimize = document.form.unbound_query_minimize.value;
+
+		if (document.form.unbound_cache_root.value == "0")
+			delete custom_settings.unbound_cache_root;
+		else
+			custom_settings.unbound_cache_root = document.form.unbound_cache_root.value;
+
+		if (document.form.unbound_save_cache.value == "0")
+			delete custom_settings.unbound_save_cache;
+		else
+			custom_settings.unbound_save_cache = document.form.unbound_save_cache.value;
+
+		if (document.getElementById('unbound_ttl_min').value == "0")
+			delete custom_settings.unbound_ttl_min;
+		else
+			custom_settings.unbound_ttl_min = document.getElementById('unbound_ttl_min').value;
+
+		if (document.getElementById('unbound_domain_insecure').value == "")
+			delete custom_settings.unbound_domain_insecure;
+		else
+			custom_settings.unbound_domain_insecure = Base64.encode(document.getElementById('unbound_domain_insecure').value);
+
+		if (document.getElementById('unbound_domain_rebindok').value == "")
+			delete custom_settings.unbound_domain_rebindok;
+		else
+			custom_settings.unbound_domain_rebindok = Base64.encode(document.getElementById('unbound_domain_rebindok').value);
+
+		if (document.form.unbound_statslog.value == "0")
+			delete custom_settings.unbound_statslog;
+		else
+			custom_settings.unbound_statslog = document.form.unbound_statslog.value;
+
+		if (document.getElementById('unbound_custom_server').value == "")
+			delete custom_settings.unbound_custom_server;
+		else
+			custom_settings.unbound_custom_server = Base64.encode(document.getElementById('unbound_custom_server').value);
+
+		if (document.getElementById('unbound_custom_extend').value == "")
+			delete custom_settings.unbound_custom_extend;
+		else
+			custom_settings.unbound_custom_extend = Base64.encode(document.getElementById('unbound_custom_extend').value);
 
         /* Store object as a string in the amng_custom hidden input field */
         document.getElementById('amng_custom').value = JSON.stringify(custom_settings);
