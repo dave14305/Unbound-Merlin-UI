@@ -613,7 +613,7 @@ auto_entwareinit() {
     echo ". /opt/etc/init.d/rc.func"
     echo ""
 	echo 'if [ "$(am_settings_get unbound_save_cache)" = "1" ] && [ "$1" = "start" -o "$1" = "restart" ] && [ -f "/opt/var/lib/unbound/cache_dump.tmp" ] && [ -n "$(pidof unbound)" ] &&  [ "$(nvram get ntp_ready)" = "1" ] ; then'
-s    echo "  $UB_CONTROL load_cache < $UB_CACHE_DUMP"
+    echo "  $UB_CONTROL load_cache < $UB_CACHE_DUMP"
     echo "fi"
   } > $UB_INIT_FILE
 }
