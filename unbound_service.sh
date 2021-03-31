@@ -599,7 +599,7 @@ auto_entwareinit() {
     echo "else"
     echo "  ENABLED=yes"
     echo "fi"
-    echo "if [[ \"\$(am_settings_get unbound_save_cache)\" = \"1\" && ( \"\$1\" = \"stop\" || \"\$1\" = \"restart\" ) && \"\$(pidof unbound)\" && \"\$(nvram get ntp_ready)\" = \"1\" ]] ; then"
+	echo 'if [ "$(am_settings_get unbound_save_cache)" = "1" ] && [ "$1" = "stop" -o "$1" = "restart" ] && [ -n "$(pidof unbound)" ] && [ "$(nvram get ntp_ready)" = "1" ]; then'
     echo "  $UB_CONTROL dump_cache > $UB_CACHE_DUMP"
     echo "fi"
     echo "PROCS=unbound"
@@ -612,8 +612,8 @@ auto_entwareinit() {
     echo ""
     echo ". /opt/etc/init.d/rc.func"
     echo ""
-    echo "if [[ \"\$(am_settings_get unbound_save_cache)\" = \"1\" && ( \"\$1\" = \"start\" || \"\$1\" = \"restart\" ) && -f \"$UB_CACHE_DUMP\" && \"\$(pidof unbound)\" && \"\$(nvram get ntp_ready)\" = \"1\" ]] ; then"
-    echo "  $UB_CONTROL load_cache < $UB_CACHE_DUMP"
+	echo 'if [ "$(am_settings_get unbound_save_cache)" = "1" ] && [ "$1" = "start" -o "$1" = "restart" ] && [ -f "/opt/var/lib/unbound/cache_dump.tmp" ] && [ -n "$(pidof unbound)" ] &&  [ "$(nvram get ntp_ready)" = "1" ] ; then'
+s    echo "  $UB_CONTROL load_cache < $UB_CACHE_DUMP"
     echo "fi"
   } > $UB_INIT_FILE
 }
