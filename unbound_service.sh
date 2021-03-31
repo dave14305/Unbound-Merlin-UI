@@ -907,10 +907,12 @@ if [ "$#" -ge "1" ]; then
   unbound_getconf
   case "$1" in
     genconf)
+	  [ -f "$UB_BINDIR/unbound" ] || exit
       # used to generate an initial config file from S61unbound during boot if never initialized from the GUI
       generate_conf
       ;;
     restart)
+	  [ -f "$UB_BINDIR/unbound" ] || exit
       save_cache
       if [ "$UB_B_ENABLED" = "1" ] && [ "$UB_N_RX_PORT" = "$($UB_CHECKCONF -o port)" ] && [ -n "$(pidof unbound)" ] && [ "$($UB_CHECKCONF -o val-override-date)" = "0" ]; then
         restart_action="reload"
