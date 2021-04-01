@@ -22,6 +22,7 @@
   <script language="JavaScript" type="text/javascript" src="/validator.js"></script>
   <script language="JavaScript" type="text/javascript" src="/tmmenu.js"></script>
   <script language="JavaScript" type="text/javascript" src="/base64.js"></script>
+  <script language="JavaScript" type="text/javascript" src="/js/jquery.js"></script>
 
   <script>
     var custom_settings = <% get_custom_settings(); %>;
@@ -206,27 +207,9 @@
             document.getElementById('unbound_custom_extend').value = Base64.decode(custom_settings.unbound_custom_extend);
 
         if (custom_settings.unbound_ui_version == undefined)
-            document.form.unbound_ui_version.value = "N/A";
+            document.getElementById('unbound_ui_version').innerText = "N/A";
         else
-            document.form.unbound_ui_version.value = custom_settings.unbound_ui_version;
-
-        if (custom_settings.unbound_ui_newversion != undefined && custom_settings.unbound_ui_newversion != custom_settings.unbound_ui_version ) {
-            if (custom_settings.unbound_ui_newversion == "CONNERR") {
-              document.getElementById("unbound_ui_verstatus").innerHTML = "Connection to update server failed!";
-              showhide("checkbutton", true);
-              showhide("updatebutton", false);
-            }
-            else {
-              document.getElementById("unbound_ui_verstatus").innerHTML = "New version "+custom_settings.unbound_ui_newversion+" available!";
-              document.getElementById("unbound_ui_verstatus").style.display = "inline";
-              showhide("checkbutton", false);
-              showhide("updatebutton", true);
-            }
-        }
-        else {
-          showhide("checkbutton", true);
-          showhide("updatebutton", false);
-        }
+            document.getElementById('unbound_ui_version').innerText = 'v' + custom_settings.unbound_ui_version;
 
         var vpnclientsactive = SetOutgoingInterfaceOptions();
         hide_outiface(vpnclientsactive);
@@ -247,18 +230,52 @@
         showhide("outiface_tr", (_value == "1"));
     }
 
+	function update_status(){
+		$.ajax({
+			url: '/ext/unboundui/detect_update.js',
+			dataType: 'script',
+			timeout: 3000,
+			error:	function(xhr){
+				setTimeout('update_status();', 1000);
+			},
+			success: function(){
+				if ( verUpdateStatus == "InProgress" )
+					setTimeout('update_status();', 1000);
+				else {
+					document.getElementById("ver_check").disabled = false;
+					document.getElementById("ver_update_scan").style.display = "none";
+					if ( verUpdateStatus == "NoUpdate" ) {
+						document.getElementById("versionStatus").innerText = " You have the latest version.";
+						document.getElementById("versionStatus").style.display = "";
+						}
+					else if ( verUpdateStatus == "Error" ) {
+						document.getElementById("versionStatus").innerText = " Error getting remote version.";
+						document.getElementById("versionStatus").style.display = "";
+						}
+					else {
+						/* version update or hotfix available */
+						/* toggle update button */
+						document.getElementById("versionStatus").innerText = " " + verUpdateStatus + " available!";
+						document.getElementById("versionStatus").style.display = "";
+						document.getElementById("ver_check").style.display = "none";
+						document.getElementById("ver_update").style.display = "";
+					}
+				}
+			}
+		});
+	}
+
     function checkForUpdate() {
-      document.form.action_script.value = "start_ubcheckupdate";
-      document.form.action_wait.value = 2;
-      showLoading();
-      document.form.submit();
+		document.getElementById("ver_check").disabled = true;
+		document.ver_check.action_script.value="start_ubcheckupdate"
+		document.ver_check.submit();
+		document.getElementById("ver_update_scan").style.display = "";
+		setTimeout("update_status();", 2000);
     }
 
     function updateSelf() {
       document.form.action_script.value = "start_ubupdate";
-      document.form.action_wait.value = 5;
-      showLoading();
-      document.form.submit();
+	  document.form.submit();
     }
 
     function applySettings() {
@@ -457,15 +474,17 @@
                                                         <span id="unbound_status"></span>
                                                     </td>
                                                 </tr>
-                                                <tr>
-                                                    <th>Unbound UI Version</th>
-                                                    <td>
-                                                        <input type="text" maxlength="5" class="input_6_table" id="unbound_ui_version" value="" readonly>
-                                                        <input type="button" class="button_gen" onclick="checkForUpdate();" value="Check" id="checkbutton">
-                                                        <input type="button" class="button_gen" onclick="updateSelf();" value="Update" id="updatebutton" style="display:none;">
-                                                        <span id="unbound_ui_verstatus" style="display:none;">Current version</span>
-                                                    </td>
-                                                </tr>
+												<th>Unbound-UI Version</th>
+												<td>
+													<span id="unbound_ui_version" style="margin-left:4px; color:#FFFFFF;"></span>
+													&nbsp;&nbsp;&nbsp;
+													<input type="button" id="ver_check" class="button_gen" style="width:135px;height:24px;" onclick="checkForUpdate();" value="Check">
+													<input type="button" id="ver_update" class="button_gen" style="display:none;width:135px;height:24px;" onclick="updateSelf();" value="Update">
+													&nbsp;&nbsp;&nbsp;
+													<img id="ver_update_scan" style="display:none;vertical-align:middle;" src="images/InternetScan.gif">
+													<span id="versionStatus" style="color:#FC0;display:none;"></span>
+												</td>
+												</tr>
                                                 <tr id="outiface_tr">
                                                     <th><a class="hintstyle" href="javascript:void(0);" onclick="YazHint(3);">WAN Interface</a></th>
                                                     <td>
@@ -663,6 +682,15 @@
     <td width="10" align="center" valign="top"></td>
     </tr>
     </table>
+	<form method="post" name="ver_check" action="/start_apply.htm" target="hidden_frame">
+	<input type="hidden" name="productid" value="<% nvram_get("productid"); %>">
+	<input type="hidden" name="current_page" value="">
+	<input type="hidden" name="next_page" value="">
+	<input type="hidden" name="action_mode" value="apply">
+	<input type="hidden" name="action_script" value="">
+	<input type="hidden" name="action_wait" value="">
+	</form>
+
     <div id="footer"></div>
 </body>
 

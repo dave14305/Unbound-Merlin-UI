@@ -25,6 +25,8 @@
 
 # v0.9.7 2021-03-30 by dave14305
 # Adapted for ASUSWRT-Merlin from OpenWRT unbound.sh
+version=0.9.7
+release=2021-03-30
 
 # Unbound Directory locations
 UB_BINDIR=/opt/sbin
@@ -57,9 +59,8 @@ UB_CHECKCONF=$UB_BINDIR/unbound-checkconf
 UB_CACHE_DUMP=$UB_VARDIR/cache_dump.tmp
 
 UB_GIT_REPO="https://raw.githubusercontent.com/dave14305/Unbound-Merlin-UI/master"
-UB_LOCAL_VERSION="$(/bin/grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})' "$0" | sed -e 's/v//')"
+UB_LOCAL_VERSION="$version"
 
-#v0.1.1
 # necessary for proper timezone in unbound.log
 TZ="$(cat /etc/TZ)"
 export TZ
@@ -515,17 +516,17 @@ auto_serviceevent() {
     sed -i '\~# Unbound-UI Addition~d' /jffs/scripts/service-event
   fi
   if ! /bin/grep -vE "^#" /jffs/scripts/service-event | /bin/grep -qE "unbound.*sh $UB_ADDON_DIR/unbound_service.sh"; then
-    cmdline="if [ \"\$2\" = \"unbound\" ]; then sh $UB_ADDON_DIR/unbound_service.sh \"\$1\" ; fi # Unbound-UI Addition"
+    cmdline="if [ \"\$2\" = \"unbound\" ]; then { sh $UB_ADDON_DIR/unbound_service.sh \"\$1\" & } ; fi # Unbound-UI Addition"
     sed -i '\~\"unbound\".*# Unbound-UI Addition~d' /jffs/scripts/service-event
     echo "$cmdline" >> /jffs/scripts/service-event
   fi
   if ! /bin/grep -vE "^#" /jffs/scripts/service-event | /bin/grep -qE "ubcheckupdate.*sh $UB_ADDON_DIR/unbound_service.sh"; then
-    cmdline="if [ \"\$2\" = \"ubcheckupdate\" ]; then sh $UB_ADDON_DIR/unbound_service.sh checkupdate ; fi # Unbound-UI Addition"
+    cmdline="if [ \"\$2\" = \"ubcheckupdate\" ]; then { sh $UB_ADDON_DIR/unbound_service.sh checkupdate & } ; fi # Unbound-UI Addition"
     sed -i '\~\"ubcheckupdate\".*# Unbound-UI Addition~d' /jffs/scripts/service-event
     echo "$cmdline" >> /jffs/scripts/service-event
   fi
   if ! /bin/grep -vE "^#" /jffs/scripts/service-event | /bin/grep -qE "ubupdate.*sh $UB_ADDON_DIR/unbound_service.sh"; then
-    cmdline="if [ \"\$2\" = \"ubupdate\" ]; then sh $UB_ADDON_DIR/unbound_service.sh update ; fi # Unbound-UI Addition"
+    cmdline="if [ \"\$2\" = \"ubupdate\" ]; then { sh $UB_ADDON_DIR/unbound_service.sh update & } ; fi # Unbound-UI Addition"
     sed -i '\~\"ubupdate\".*# Unbound-UI Addition~d' /jffs/scripts/service-event
     echo "$cmdline" >> /jffs/scripts/service-event
   fi
@@ -544,7 +545,7 @@ auto_serviceeventend() {
     chmod 755 /jffs/scripts/service-event-end
   fi
   if ! /bin/grep -vE "^#" /jffs/scripts/service-event-end | /bin/grep -qE "restart.*diskmon.*sh $UB_ADDON_DIR/unbound_service.sh"; then
-    cmdline="if [ \"\$1\" = \"restart\" ] && [ \"\$2\" = \"diskmon\" ]; then sh $UB_ADDON_DIR/unbound_service.sh restart ; fi # Unbound-UI Addition"
+    cmdline="if [ \"\$1\" = \"restart\" ] && [ \"\$2\" = \"diskmon\" ]; then { sh $UB_ADDON_DIR/unbound_service.sh restart & } ; fi # Unbound-UI Addition"
     sed -i '\~\"diskmon\".*# Unbound-UI Addition~d' /jffs/scripts/service-event-end
     echo "$cmdline" >> /jffs/scripts/service-event-end
   fi
@@ -645,16 +646,55 @@ download_file() {
 	fi
 }
 
-check_update() {
-  if ! check_connection; then am_settings_set unbound_ui_newversion "CONERR"; exit 1; fi
-  remotever="$(curl -fsL --retry 3 --connect-timeout 3 "${UB_GIT_REPO}/unbound_service.sh" | /bin/grep -m1 -oE 'v[0-9]{1,2}([.][0-9]{1,2})([.][0-9]{1,2})' | sed -e 's/v//')"
-  if [ "$UB_LOCAL_VERSION" != "$remotever" ]; then
-    am_settings_set unbound_ui_newversion "$remotever"
-  fi
-}
+compare_remote_version() {
+	# Check version on Github and determine the difference with the installed version
+	# Outcomes: Version update, Hotfix (w/o version change), or no update
+	local remotever localmd5 remotemd5 localmd5asp remotemd5asp
+	# Fetch version of the shell script on Github
+	remotever="$(curl -fsN --retry 3 --connect-timeout 3 "${UB_GIT_REPO}/unbound_service.sh" | /bin/grep "^version=" | sed -e 's/version=//')"
+	if [ "${version//.}" -lt "${remotever//.}" ]; then		# strip the . from version string for numeric comparison
+		# version upgrade
+		echo "$remotever"
+	else
+		# If no version change, calculate md5sum of local and remote files
+		# to determine if a hotfix has been published
+		localmd5="$(md5sum "$0" | awk '{print $1}')"
+		remotemd5="$(curl -fsL --retry 3 --connect-timeout 3 "${UB_GIT_REPO}/unbound_service.sh" | md5sum | awk '{print $1}')"
+		localmd5asp="$(md5sum "$UB_ADDON_DIR/Unbound.asp" | awk '{print $1}')"
+		remotemd5asp="$(curl -fsL --retry 3 --connect-timeout 3 "${UB_GIT_REPO}/Unbound.asp" | md5sum | awk '{print $1}')"
+		if [ "$localmd5" != "$remotemd5" ] || [ "$localmd5asp" != "$remotemd5asp" ]; then
+			# hotfix
+			printf "Hotfix\n"
+		else
+			printf "NoUpdate\n"
+		fi
+	fi
+} # compare_remote_version
+
+update() {
+	# Check for, and optionally apply updates.
+	# Parameter options: check (do not update), silent (update without prompting)
+	local updatestatus
+	# Update the webui status thorugh detect_update.js ajax call.
+	printf "var verUpdateStatus = \"%s\";\n" "InProgress" > /www/ext/unboundui/detect_update.js
+	updatestatus="$(compare_remote_version)"
+	# Check to make sure we got back a valid status from compare_remote_version(). If not, indicate Error.
+	case "$updatestatus" in
+		'NoUpdate'|'Hotfix'|[0-9].[0-9].[0-9]) ;;
+		*) updatestatus="Error"
+	esac
+	printf "var verUpdateStatus = \"%s\";\n" "$updatestatus" > /www/ext/unboundui/detect_update.js
+
+	if [ "$1" = "check" ]; then
+		# Do not proceed with any updating if check function requested
+		return
+	fi
+	download_file "unbound_service.sh" "$UB_ADDON_DIR/unbound_service.sh"
+	exec "$0" install
+	exit
+} # update
 
 update_unboundui() {
-  if ! check_connection; then am_settings_set unbound_ui_newversion "CONERR"; exit 1; fi
   localmd5_sh="$(md5sum "$0" | awk '{print $1}')"
   remotemd5_sh="$(curl -fsL --retry 3 --connect-timeout 3 "${UB_GIT_REPO}/unbound_service.sh" | md5sum | awk '{print $1}')"
   localmd5_asp="$(md5sum "$UB_ADDON_DIR/Unbound.asp" | awk '{print $1}')"
@@ -728,6 +768,7 @@ unbound_mountui() {
     fi
   fi
 	/usr/bin/flock -u "$FD"
+	[ -d /www/ext/unboundui ] || mkdir -p /www/ext/unboundui
 }
 
 unbound_unmountui() {
@@ -947,10 +988,10 @@ if [ "$#" -ge "1" ]; then
       dnsmasq_postconf "$2"
       ;;
     checkupdate)
-      check_update
+      update check
       ;;
     update)
-      update_unboundui
+      update silent
       ;;
     install)
       install_unboundui
