@@ -531,9 +531,7 @@ auto_serviceevent() {
   sed -i "\~Unbound-UI Addition~d" /jffs/scripts/service-event
   cmdline="if [ \"\$2\" = \"unbound\" ]; then { sh $UB_ADDON_DIR/unbound_service.sh \"\$1\" & } ; fi # Unbound-UI Addition"
   echo "$cmdline" >> /jffs/scripts/service-event
-  cmdline="if [ \"\$2\" = \"ubcheckupdate\" ]; then { sh $UB_ADDON_DIR/unbound_service.sh checkupdate & } ; fi # Unbound-UI Addition"
-  echo "$cmdline" >> /jffs/scripts/service-event
-  cmdline="if [ \"\$2\" = \"ubupdate\" ]; then { sh $UB_ADDON_DIR/unbound_service.sh update & } ; fi # Unbound-UI Addition"
+  cmdline="if echo \"\$2\" | /bin/grep -q \"^ub\"; then { sh $UB_ADDON_DIR/unbound_service.sh \"\${2#ub}\" & } ; fi # Unbound-UI Addition"
   echo "$cmdline" >> /jffs/scripts/service-event
 }
 
