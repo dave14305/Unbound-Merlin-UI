@@ -500,89 +500,67 @@ generate_conf() {
   fi
 }
 
+Init_UserScript() {
+	# Properly setup an empty Merlin user script
+	local userscript
+	if [ -z "$1" ]; then
+		return
+	fi
+	userscript="/jffs/scripts/$1"
+	if [ ! -f "$userscript" ]; then
+		# If script doesn't exist yet, create with shebang
+		printf "#!/bin/sh\n\n" > "$userscript"
+	elif [ -f "$userscript" ] && ! head -1 "$userscript" | /bin/grep -qE "^#!/bin/sh"; then
+		#  Script exists but no shebang, so insert it at line 1
+		sed -i '1s~^~#!/bin/sh\n~' "$userscript"
+	elif [ "$(tail -c1 "$userscript" | wc -l)" = "0" ]; then
+		# Script exists with shebang, but no linefeed before EOF; makes appending content unpredictable if missing
+		printf "\n" >> "$userscript"
+	fi
+	if [ ! -x "$userscript" ]; then
+		# Ensure script is executable by owner
+		chmod 755 "$userscript"
+	fi
+} # Init_UserScript
+
 auto_serviceevent() {
   # Borrowed from Adamm00
   # https://github.com/Adamm00/IPSet_ASUS/blob/master/firewall.sh
-  if [ ! -f "/jffs/scripts/service-event" ]; then
-      echo "#!/bin/sh" > /jffs/scripts/service-event
-      echo >> /jffs/scripts/service-event
-  elif [ -f "/jffs/scripts/service-event" ] && ! head -1 /jffs/scripts/service-event | /bin/grep -qE "^#!/bin/sh"; then
-      sed -i '1s~^~#!/bin/sh\n~' /jffs/scripts/service-event
-  fi
-  if [ ! -x "/jffs/scripts/service-event" ]; then
-    chmod 755 /jffs/scripts/service-event
-  fi
-  if [ "$(/bin/grep -vE "^#" /jffs/scripts/service-event | /bin/grep -E "# Unbound-UI Addition" | wc -l)" -ne "3" ]; then
-    sed -i '\~# Unbound-UI Addition~d' /jffs/scripts/service-event
-  fi
-  if ! /bin/grep -vE "^#" /jffs/scripts/service-event | /bin/grep -qE "unbound.*sh $UB_ADDON_DIR/unbound_service.sh"; then
-    cmdline="if [ \"\$2\" = \"unbound\" ]; then { sh $UB_ADDON_DIR/unbound_service.sh \"\$1\" & } ; fi # Unbound-UI Addition"
-    sed -i '\~\"unbound\".*# Unbound-UI Addition~d' /jffs/scripts/service-event
-    echo "$cmdline" >> /jffs/scripts/service-event
-  fi
-  if ! /bin/grep -vE "^#" /jffs/scripts/service-event | /bin/grep -qE "ubcheckupdate.*sh $UB_ADDON_DIR/unbound_service.sh"; then
-    cmdline="if [ \"\$2\" = \"ubcheckupdate\" ]; then { sh $UB_ADDON_DIR/unbound_service.sh checkupdate & } ; fi # Unbound-UI Addition"
-    sed -i '\~\"ubcheckupdate\".*# Unbound-UI Addition~d' /jffs/scripts/service-event
-    echo "$cmdline" >> /jffs/scripts/service-event
-  fi
-  if ! /bin/grep -vE "^#" /jffs/scripts/service-event | /bin/grep -qE "ubupdate.*sh $UB_ADDON_DIR/unbound_service.sh"; then
-    cmdline="if [ \"\$2\" = \"ubupdate\" ]; then { sh $UB_ADDON_DIR/unbound_service.sh update & } ; fi # Unbound-UI Addition"
-    sed -i '\~\"ubupdate\".*# Unbound-UI Addition~d' /jffs/scripts/service-event
-    echo "$cmdline" >> /jffs/scripts/service-event
-  fi
+  Init_UserScript "service-event"
+  # Delete existing lines related to this script
+  sed -i "\~Unbound-UI Addition~d" /jffs/scripts/service-event
+  cmdline="if [ \"\$2\" = \"unbound\" ]; then { sh $UB_ADDON_DIR/unbound_service.sh \"\$1\" & } ; fi # Unbound-UI Addition"
+  echo "$cmdline" >> /jffs/scripts/service-event
+  cmdline="if [ \"\$2\" = \"ubcheckupdate\" ]; then { sh $UB_ADDON_DIR/unbound_service.sh checkupdate & } ; fi # Unbound-UI Addition"
+  echo "$cmdline" >> /jffs/scripts/service-event
+  cmdline="if [ \"\$2\" = \"ubupdate\" ]; then { sh $UB_ADDON_DIR/unbound_service.sh update & } ; fi # Unbound-UI Addition"
+  echo "$cmdline" >> /jffs/scripts/service-event
 }
 
 auto_serviceeventend() {
   # Borrowed from Adamm00
   # https://github.com/Adamm00/IPSet_ASUS/blob/master/firewall.sh
-  if [ ! -f "/jffs/scripts/service-event-end" ]; then
-      echo "#!/bin/sh" > /jffs/scripts/service-event-end
-      echo >> /jffs/scripts/service-event-end
-  elif [ -f "/jffs/scripts/service-event-end" ] && ! head -1 /jffs/scripts/service-event-end | /bin/grep -qE "^#!/bin/sh"; then
-      sed -i '1s~^~#!/bin/sh\n~' /jffs/scripts/service-event-end
-  fi
-  if [ ! -x "/jffs/scripts/service-event-end" ]; then
-    chmod 755 /jffs/scripts/service-event-end
-  fi
-  if ! /bin/grep -vE "^#" /jffs/scripts/service-event-end | /bin/grep -qE "restart.*diskmon.*sh $UB_ADDON_DIR/unbound_service.sh"; then
-    cmdline="if [ \"\$1\" = \"restart\" ] && [ \"\$2\" = \"diskmon\" ]; then { sh $UB_ADDON_DIR/unbound_service.sh restart & } ; fi # Unbound-UI Addition"
-    sed -i '\~\"diskmon\".*# Unbound-UI Addition~d' /jffs/scripts/service-event-end
-    echo "$cmdline" >> /jffs/scripts/service-event-end
-  fi
+  Init_UserScript "service-event-end"
+  # Delete existing lines related to this script
+  sed -i "\~Unbound-UI Addition~d" /jffs/scripts/service-event-end
+  cmdline="if [ \"\$1\" = \"restart\" ] && [ \"\$2\" = \"diskmon\" ]; then { sh $UB_ADDON_DIR/unbound_service.sh restart & } ; fi # Unbound-UI Addition"
+  echo "$cmdline" >> /jffs/scripts/service-event-end
 }
 
 auto_servicesstart() {
-  if [ ! -f "/jffs/scripts/services-start" ]; then
-      echo "#!/bin/sh" > /jffs/scripts/services-start
-      echo >> /jffs/scripts/services-start
-  elif [ -f "/jffs/scripts/services-start" ] && ! head -1 /jffs/scripts/services-start | /bin/grep -qE "^#!/bin/sh"; then
-      sed -i '1s~^~#!/bin/sh\n~' /jffs/scripts/services-start
-  fi
-  if [ ! -x "/jffs/scripts/services-start" ]; then
-    chmod 755 /jffs/scripts/services-start
-  fi
-  if ! /bin/grep -vE "^#" /jffs/scripts/services-start | /bin/grep -qF "sh $UB_ADDON_DIR/unbound_service.sh"; then
-    cmdline="sh $UB_ADDON_DIR/unbound_service.sh mountui # Unbound-UI Addition"
-    sed -i '\~# Unbound-UI Addition~d' /jffs/scripts/services-start
-    echo "$cmdline" >> /jffs/scripts/services-start
-  fi
+  Init_UserScript "services-start"
+  # Delete existing lines related to this script
+  sed -i "\~Unbound-UI Addition~d" /jffs/scripts/services-start
+  cmdline="sh $UB_ADDON_DIR/unbound_service.sh mountui # Unbound-UI Addition"
+  echo "$cmdline" >> /jffs/scripts/services-start
 }
 
 auto_dnsmasqpostconf() {
-  if [ ! -f "/jffs/scripts/dnsmasq.postconf" ]; then
-      echo "#!/bin/sh" > /jffs/scripts/dnsmasq.postconf
-      echo >> /jffs/scripts/dnsmasq.postconf
-  elif [ -f "/jffs/scripts/dnsmasq.postconf" ] && ! head -1 /jffs/scripts/dnsmasq.postconf | /bin/grep -qE "^#!/bin/sh"; then
-      sed -i '1s~^~#!/bin/sh\n~' /jffs/scripts/dnsmasq.postconf
-  fi
-  if [ ! -x "/jffs/scripts/dnsmasq.postconf" ]; then
-    chmod 755 /jffs/scripts/dnsmasq.postconf
-  fi
-  if ! /bin/grep -vE "^#" /jffs/scripts/dnsmasq.postconf | /bin/grep -qF "sh $UB_ADDON_DIR/unbound_service.sh"; then
-    cmdline="sh $UB_ADDON_DIR/unbound_service.sh dnsmasq_postconf \"\$1\" # Unbound-UI Addition"
-    sed -i '\~# Unbound-UI Addition~d' /jffs/scripts/dnsmasq.postconf
-    echo "$cmdline" >> /jffs/scripts/dnsmasq.postconf
-  fi
+  Init_UserScript "dnsmasq.postconf"
+  # Delete existing lines related to this script
+  sed -i "\~Unbound-UI Addition~d" /jffs/scripts/dnsmasq.postconf
+  cmdline="sh $UB_ADDON_DIR/unbound_service.sh dnsmasq_postconf \"\$1\" # Unbound-UI Addition"
+  echo "$cmdline" >> /jffs/scripts/dnsmasq.postconf
 }
 
 auto_entwareinit() {
