@@ -595,30 +595,19 @@ auto_entwareinit() {
   } > $UB_INIT_FILE
 }
 
-# From Adamm00
-check_connection() {
-	livecheck="0"
-	while [ "$livecheck" != "2" ]; do
-		if ping -q -w3 -c1 raw.githubusercontent.com >/dev/null 2>&1; then
-			break
-		else
-			livecheck="$((livecheck + 1))"
-			if [ "$livecheck" != "2" ]; then
-				sleep 3
-			else
-				return "1"
-			fi
-		fi
-	done
-}
-
 download_file() {
-	if [ "$(curl -fsL --retry 3 --connect-timeout 3 "${UB_GIT_REPO}/${1}" | md5sum | awk '{print $1}')" != "$(md5sum "$2" 2>/dev/null | awk '{print $1}')" ]; then
-		if curl -fsL --retry 3 --connect-timeout 3 "${UB_GIT_REPO}/${1}" -o "$2"; then
+	# Download file from Github once to a temp location. If the same as the destination file, don't replace.
+	# Otherwise move it from the temp location to the destination.
+	if curl -fsL --retry 3 --connect-timeout 3 "${UB_GIT_REPO}/${1}" -o "/tmp/${1}"; then
+		if [ "$(md5sum "/tmp/${1}" | awk '{print $1}')" != "$(md5sum "$2" 2>/dev/null | awk '{print $1}')" ]; then
+			mv -f "/tmp/${1}" "$2"
 			logger -t Unbound-UI "Updated $(echo "$1" | awk -F / '{print $NF}')"
 		else
-			logger -t Unbound-UI "Updating $(echo "$1" | awk -F / '{print $NF}') failed"
+			logger -t Unbound-UI "File $(echo "$2" | awk -F / '{print $NF}') is already up-to-date"
+			rm -f "/tmp/$1" 2>/dev/null
 		fi
+	else
+		logger -t Unbound-UI "Updating $(echo "$1" | awk -F / '{print $NF}') failed"
 	fi
 }
 
@@ -791,6 +780,7 @@ unbound_unmountui() {
     MyPageTitle="$(echo "$i" | sed 's~.asp~~g').title"
     rm -rf "/www/user/$MyPageTitle"
   done
+  rm -r /www/ext/unboundui 2>/dev/null
 }
 
 dnsmasq_postconf() {

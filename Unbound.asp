@@ -415,12 +415,14 @@
 		else
 			custom_settings.unbound_custom_extend = Base64.encode(document.getElementById('unbound_custom_extend').value);
 
-        /* Store object as a string in the amng_custom hidden input field */
-        document.getElementById('amng_custom').value = JSON.stringify(custom_settings);
-
-        /* Apply */
-        showLoading();
-        document.form.submit();
+		/* Store object as a string in the amng_custom hidden input field */
+		if (JSON.stringify(custom_settings).length < 8192) {
+			document.getElementById('amng_custom').value = JSON.stringify(custom_settings);
+			showLoading();
+			document.form.submit();
+		}
+		else
+			alert("Settings for all addons exceeds 8K limit! Cannot save!");
     }
   </script>
 </head>
