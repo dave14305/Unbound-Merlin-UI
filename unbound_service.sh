@@ -792,7 +792,6 @@ dnsmasq_postconf() {
     pc_replace "cache-size=1500" "cache-size=0" "$1"  # disable cache
     pc_delete  "trust-anchor=" "$1"  # disable dnssec
     pc_delete  "dnssec" "$1"         # disable dnssec
-    pc_append  "proxy-dnssec" "$1"
   fi
 }
 
